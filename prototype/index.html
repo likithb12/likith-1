@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#0d1117" />
+<title>Lexicon — vocab &amp; teaser (prototype)</title>
+<style>
+  :root{
+    --bg:#0b0e14; --panel:#141a24; --panel-2:#1b2431; --line:#242f3d;
+    --txt:#e6edf3; --muted:#8b98a9; --dim:#5c6b7d;
+    --accent:#6ea8fe; --accent-2:#8b7cff; --good:#3fb950; --bad:#f7768e; --warn:#e3b341;
+    --radius:16px; --shadow:0 8px 30px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%}
+  body{
+    background:radial-gradient(1200px 600px at 80% -10%, #16203010, transparent),
+               radial-gradient(900px 500px at -10% 110%, #1a153010, transparent), var(--bg);
+    color:var(--txt); font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,system-ui,sans-serif;
+    display:flex; justify-content:center;
+  }
+  .phone{
+    width:100%; max-width:440px; min-height:100dvh; display:flex; flex-direction:column;
+    background:linear-gradient(180deg,#0c1017,#0b0e14); position:relative;
+  }
+  header{
+    padding:18px 20px 10px; display:flex; align-items:center; justify-content:space-between;
+  }
+  .brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.3px}
+  .logo{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,var(--accent),var(--accent-2));
+    display:grid;place-items:center;font-weight:800;color:#0b0e14;box-shadow:var(--shadow)}
+  .streak{font-size:13px;color:var(--warn);background:#1c1a10;border:1px solid #2c2712;padding:6px 10px;border-radius:999px;font-weight:600}
+  main{flex:1;padding:6px 20px 96px;overflow-y:auto}
+  h1{font-size:22px;margin:14px 0 2px}
+  h2{font-size:17px;margin:22px 0 10px;color:var(--txt)}
+  .muted{color:var(--muted)}
+  .sub{color:var(--muted);font-size:13.5px;margin:0 0 4px}
+
+  /* cards */
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)}
+  .card+.card{margin-top:12px}
+  .row{display:flex;gap:12px}
+  .row>*{flex:1}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px}
+  .stat .n{font-size:24px;font-weight:800}
+  .stat .l{font-size:12px;color:var(--muted);margin-top:2px}
+
+  .cta{
+    width:100%;border:none;border-radius:14px;padding:16px;font-size:16px;font-weight:700;color:#0b0e14;
+    background:linear-gradient(135deg,var(--accent),var(--accent-2));cursor:pointer;box-shadow:var(--shadow)}
+  .cta:active{transform:translateY(1px)}
+  .btn{border:1px solid var(--line);background:var(--panel-2);color:var(--txt);border-radius:12px;padding:13px 14px;
+    font-size:15px;font-weight:600;cursor:pointer;width:100%;text-align:left;display:flex;gap:10px;align-items:center}
+  .btn:active{transform:translateY(1px)}
+  .btn.sel{border-color:var(--accent);background:#16223a}
+  .btn.correct{border-color:var(--good);background:#0f2417}
+  .btn.wrong{border-color:var(--bad);background:#2a1418}
+  .btns{display:flex;flex-direction:column;gap:10px;margin-top:14px}
+  .ghost{background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:12px;padding:12px;width:100%;cursor:pointer;font-weight:600}
+
+  .pill{display:inline-block;font-size:11px;color:var(--muted);background:var(--panel-2);border:1px solid var(--line);
+    padding:4px 9px;border-radius:999px;margin-right:6px}
+  .tag-ai{color:var(--accent);border-color:#28406a;background:#111a2b}
+
+  textarea{width:100%;background:var(--panel-2);border:1px solid var(--line);color:var(--txt);border-radius:12px;
+    padding:12px;font:inherit;resize:vertical;min-height:84px}
+  input[type=text]{width:100%;background:var(--panel-2);border:1px solid var(--line);color:var(--txt);border-radius:12px;padding:13px;font:inherit}
+
+  .word{font-size:26px;font-weight:800;letter-spacing:.3px}
+  .phon{color:var(--muted);font-size:14px;margin-left:8px;font-weight:500}
+  .def{color:var(--txt);margin:10px 0}
+  .ex{color:var(--muted);font-style:italic;border-left:2px solid var(--line);padding-left:10px;margin:8px 0}
+
+  .prog{height:6px;background:var(--panel-2);border-radius:999px;overflow:hidden;margin:2px 0 16px}
+  .prog>i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-2));width:0;transition:width .4s}
+
+  .feedback{border-radius:12px;padding:12px;margin-top:12px;font-size:14px}
+  .feedback.good{background:#0f2417;border:1px solid #1c4028;color:#a6e3b8}
+  .feedback.bad{background:#2a1418;border:1px solid #4a2029;color:#f0a6b4}
+  .grading{color:var(--accent);font-size:13px;margin-top:12px;display:flex;align-items:center;gap:8px}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);animation:blink 1s infinite}
+  @keyframes blink{0%,100%{opacity:.3}50%{opacity:1}}
+
+  nav{position:fixed;bottom:0;width:100%;max-width:440px;display:flex;background:#0c1119cc;backdrop-filter:blur(12px);
+    border-top:1px solid var(--line);padding:8px 8px calc(8px + env(safe-area-inset-bottom))}
+  nav button{flex:1;background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px}
+  nav button.on{color:var(--accent)}
+  nav .ic{font-size:19px}
+
+  .center{min-height:60vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:6px}
+  .big-emoji{font-size:56px}
+  .fade{animation:fade .35s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .banner{font-size:12px;color:var(--muted);text-align:center;padding:8px;background:#10161f;border-bottom:1px solid var(--line)}
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="banner">🧪 Prototype — mock data, simulated AI. UX flow only.</div>
+  <header>
+    <div class="brand"><div class="logo">L</div> Lexicon</div>
+    <div class="streak">🔥 7-day streak</div>
+  </header>
+  <main id="view"></main>
+
+  <nav id="nav">
+    <button data-tab="home" class="on"><span class="ic">🏠</span>Home</button>
+    <button data-tab="discover"><span class="ic">✨</span>Discover</button>
+    <button data-tab="stats"><span class="ic">📊</span>Stats</button>
+  </nav>
+</div>
+
+<script>
+/* ---------- mock data ---------- */
+const WORDS = [
+  {word:"ephemeral", phon:"/ɪˈfɛm(ə)rəl/", pos:"adjective",
+   def:"lasting for a very short time.",
+   ex:["The ephemeral beauty of a sunset kept them silent.","Fame can be ephemeral in the age of viral trends."],
+   syn:["fleeting","transient","momentary"], wrongSyn:"permanent"},
+  {word:"sanguine", phon:"/ˈsaŋɡwɪn/", pos:"adjective",
+   def:"optimistic or positive, especially in a difficult situation.",
+   ex:["She remained sanguine about the team's chances despite the loss.","He took a sanguine view of the delays."],
+   syn:["optimistic","hopeful","buoyant"], wrongSyn:"gloomy"},
+  {word:"gregarious", phon:"/ɡrɪˈɡɛːrɪəs/", pos:"adjective",
+   def:"fond of the company of others; sociable.",
+   ex:["A gregarious host, he knew everyone at the party.","Dolphins are highly gregarious animals."],
+   syn:["sociable","outgoing","convivial"], wrongSyn:"reclusive"},
+];
+const TEASER = {
+  q:"I speak without a mouth and hear without ears. I have no body, but I come alive with the wind. What am I?",
+  choices:["A shadow","An echo","A dream","A candle"], answer:1,
+  why:"An echo is sound reflected back — it 'speaks' and 'hears' via the air."
+};
+
+/* ---------- app state ---------- */
+let tab = "home";
+const session = { steps:["teaser","game","game","useit","done"], i:0, correct:0, total:0 };
+
+const $ = sel => document.querySelector(sel);
+const view = () => $("#view");
+
+/* ---------- navigation ---------- */
+document.querySelectorAll("#nav button").forEach(b=>{
+  b.onclick=()=>{ tab=b.dataset.tab; syncNav(); render(); };
+});
+function syncNav(){ document.querySelectorAll("#nav button").forEach(b=>b.classList.toggle("on",b.dataset.tab===tab)); }
+function setNavVisible(v){ $("#nav").style.display = v ? "flex":"none"; }
+
+/* ---------- render ---------- */
+function render(){
+  if(tab==="home") return renderHome();
+  if(tab==="discover") return renderDiscover();
+  if(tab==="stats") return renderStats();
+}
+
+function renderHome(){
+  setNavVisible(true);
+  view().innerHTML = `
+    <div class="fade">
+      <h1>Good evening, Likith 👋</h1>
+      <p class="sub">You have <b style="color:var(--accent)">8 words</b> due for review today.</p>
+
+      <div class="row" style="margin:14px 0">
+        <div class="stat"><div class="n">142</div><div class="l">words learned</div></div>
+        <div class="stat"><div class="n">86%</div><div class="l">accuracy</div></div>
+        <div class="stat"><div class="n">7</div><div class="l">day streak</div></div>
+      </div>
+
+      <div class="card">
+        <div style="font-weight:700;font-size:16px">Today's session</div>
+        <p class="sub" style="margin:6px 0 0">1 warm-up teaser · 2 review games · 1 "use it" challenge</p>
+        <div style="margin-top:14px"></div>
+        <button class="cta" onclick="startSession()">▶ Start daily session</button>
+      </div>
+
+      <h2>Jump into a mode</h2>
+      <div class="btns">
+        <button class="btn" onclick="startSession()">🧩 <div><b>Warm-up teaser</b><div class="muted" style="font-size:12px">A quick logic riddle to get going</div></div></button>
+        <button class="btn" onclick="startAt('game')">🎯 <div><b>Review games</b><div class="muted" style="font-size:12px">Guess-from-context · odd-one-out</div></div></button>
+        <button class="btn" onclick="startAt('useit')">✍️ <div><b>Use it in a sentence</b> <span class="pill tag-ai">AI graded</span></div></button>
+      </div>
+    </div>`;
+}
+
+/* ---------- session flow ---------- */
+function startSession(){ session.i=0; session.correct=0; session.total=0; runStep(); }
+function startAt(step){ session.i=session.steps.indexOf(step); session.correct=0; session.total=0; runStep(); }
+
+function progressBar(){
+  const pct = Math.round((session.i/(session.steps.length-1))*100);
+  return `<div class="prog"><i style="width:${pct}%"></i></div>`;
+}
+function topBar(label){
+  return `<div style="display:flex;justify-content:space-between;align-items:center;margin:6px 0 4px">
+      <button class="ghost" style="width:auto;padding:6px 12px" onclick="tab='home';syncNav();render()">✕ Exit</button>
+      <span class="muted" style="font-size:12px">${label}</span>
+    </div>${progressBar()}`;
+}
+
+function runStep(){
+  setNavVisible(false);
+  const step = session.steps[session.i];
+  if(step==="teaser") return renderTeaser();
+  if(step==="game")   return renderGame();
+  if(step==="useit")  return renderUseIt();
+  if(step==="done")   return renderDone();
+}
+function next(){ session.i++; runStep(); }
+
+/* teaser */
+function renderTeaser(){
+  view().innerHTML = `<div class="fade">
+    ${topBar("Warm-up teaser")}
+    <div class="card">
+      <span class="pill">🧠 Lateral thinking</span>
+      <p class="def" style="font-size:16px;margin-top:12px">${TEASER.q}</p>
+      <div class="btns" id="tchoices">
+        ${TEASER.choices.map((c,i)=>`<button class="btn" onclick="answerTeaser(${i})">${c}</button>`).join("")}
+      </div>
+    </div>
+  </div>`;
+}
+function answerTeaser(i){
+  const ok = i===TEASER.answer;
+  session.total++; if(ok) session.correct++;
+  const btns=[...document.querySelectorAll("#tchoices .btn")];
+  btns.forEach((b,idx)=>{ b.onclick=null; if(idx===TEASER.answer) b.classList.add("correct"); else if(idx===i) b.classList.add("wrong"); });
+  view().querySelector(".card").insertAdjacentHTML("beforeend",
+    `<div class="feedback ${ok?'good':'bad'}">${ok?'✅ Nice.':'❌ Not quite.'} ${TEASER.why}</div>
+     <div class="btns"><button class="cta" onclick="next()">Continue →</button></div>`);
+}
+
+/* review game — guess from context */
+let gameWordIdx = 0;
+function renderGame(){
+  const w = WORDS[gameWordIdx % WORDS.length];
+  const blanked = w.ex[0].replace(new RegExp(w.word,"i"), "＿＿＿＿＿");
+  const opts = shuffle([w.word, "verbose", "insipid", "candid"]);
+  view().innerHTML = `<div class="fade">
+    ${topBar("Review · guess from context")}
+    <div class="card">
+      <span class="pill">🎯 Fill the blank</span>
+      <p class="def" style="font-size:16px;margin-top:12px">${blanked}</p>
+      <div class="btns" id="gchoices">
+        ${opts.map(o=>`<button class="btn" onclick="answerGame('${o}','${w.word}')">${o}</button>`).join("")}
+      </div>
+    </div>
+    <p class="muted" style="font-size:12px;text-align:center;margin-top:10px">Spaced-repetition picks words right before you'd forget them.</p>
+  </div>`;
+}
+function answerGame(chosen, correct){
+  const w = WORDS[gameWordIdx % WORDS.length];
+  const ok = chosen===correct;
+  session.total++; if(ok) session.correct++;
+  const btns=[...document.querySelectorAll("#gchoices .btn")];
+  btns.forEach(b=>{ b.onclick=null; if(b.textContent===correct) b.classList.add("correct"); else if(b.textContent===chosen) b.classList.add("wrong"); });
+  view().querySelector(".card").insertAdjacentHTML("beforeend",
+    `<div class="feedback ${ok?'good':'bad'}">
+       <b>${w.word}</b> <span class="phon">${w.phon}</span> — ${w.def}
+       <div class="ex" style="margin-top:8px">"${w.ex[0]}"</div>
+     </div>
+     <div class="btns"><button class="cta" onclick="gameWordIdx++;next()">Continue →</button></div>`);
+}
+
+/* use it — simulated AI grading */
+function renderUseIt(){
+  const w = WORDS[1]; // sanguine
+  view().innerHTML = `<div class="fade">
+    ${topBar('Use it · AI graded')}
+    <div class="card">
+      <div><span class="word">${w.word}</span><span class="phon">${w.phon}</span></div>
+      <p class="def">${w.def}</p>
+      <p class="sub" style="margin-top:10px">Write a sentence that uses <b>${w.word}</b> correctly:</p>
+      <textarea id="uinput" placeholder="Type your sentence..."></textarea>
+      <div class="btns">
+        <button class="cta" onclick="gradeUseIt('${w.word}')">Submit for feedback</button>
+      </div>
+      <div id="ufb"></div>
+    </div>
+  </div>`;
+}
+function gradeUseIt(word){
+  const txt=($("#uinput").value||"").trim();
+  const fb=$("#ufb");
+  if(!txt){ fb.innerHTML=`<div class="feedback bad">Write something first 🙂</div>`; return; }
+  fb.innerHTML=`<div class="grading"><span class="dot"></span> Claude is reading your sentence…</div>`;
+  // simulate async AI grade
+  setTimeout(()=>{
+    const uses = txt.toLowerCase().includes(word);
+    session.total++; if(uses) session.correct++;
+    fb.innerHTML = uses
+      ? `<div class="feedback good">✅ <b>Correct usage.</b> You captured the sense of hopeful optimism well. Tip: pair "sanguine" with "about" (e.g. "sanguine <i>about</i> the outcome") for the most natural phrasing.</div>
+         <div class="btns"><button class="cta" onclick="next()">Finish session →</button></div>`
+      : `<div class="feedback bad">⚠️ I don't see "${word}" used in your sentence. Try again so it shows the meaning "optimistic in a hard situation."</div>
+         <div class="btns"><button class="ghost" onclick="$('#ufb').innerHTML=''">Try again</button></div>`;
+  }, 1100);
+}
+
+/* done */
+function renderDone(){
+  const acc = session.total? Math.round(session.correct/session.total*100):100;
+  view().innerHTML = `<div class="fade center">
+    <div class="big-emoji">🎉</div>
+    <h1>Session complete!</h1>
+    <p class="muted">You scored ${session.correct}/${session.total} · ${acc}% · streak now 🔥 8</p>
+    <div class="row" style="width:100%;margin-top:18px">
+      <div class="stat"><div class="n">+3</div><div class="l">words reviewed</div></div>
+      <div class="stat"><div class="n">+40</div><div class="l">XP earned</div></div>
+    </div>
+    <div class="btns" style="width:100%;margin-top:20px">
+      <button class="cta" onclick="tab='home';syncNav();setNavVisible(true);render()">Back to home</button>
+    </div>
+  </div>`;
+}
+
+/* ---------- discover ---------- */
+function renderDiscover(){
+  setNavVisible(true);
+  view().innerHTML = `<div class="fade">
+    <h1>Discover ✨</h1>
+    <p class="sub">Tap a theme — Claude generates a fresh word, examples, and synonyms, then adds it to your bank.</p>
+    <div class="btns">
+      ${["Everyday elegance","Business & persuasion","Emotions & mood","GRE / advanced","Surprise me"].map(t=>
+        `<button class="btn" onclick="genWord()">🎲 <b>${t}</b></button>`).join("")}
+    </div>
+    <div id="gen"></div>
+  </div>`;
+}
+function genWord(){
+  const g=$("#gen");
+  g.innerHTML=`<div class="grading" style="margin-top:16px"><span class="dot"></span> Claude is generating a word…</div>`;
+  setTimeout(()=>{
+    const w=WORDS[2]; // gregarious
+    g.innerHTML=`<div class="card fade" style="margin-top:14px">
+      <div><span class="word">${w.word}</span><span class="phon">${w.phon}</span></div>
+      <div class="pill" style="margin-top:8px">${w.pos}</div>
+      <p class="def">${w.def}</p>
+      ${w.ex.map(e=>`<div class="ex">"${e}"</div>`).join("")}
+      <p class="sub" style="margin-top:10px">Synonyms: ${w.syn.join(", ")}</p>
+      <div class="btns"><button class="cta" onclick="added()">＋ Add to my word bank</button></div>
+    </div>`;
+  },1200);
+}
+function added(){ $("#gen").innerHTML=`<div class="feedback good" style="margin-top:14px">✅ Added to your bank — it'll appear in tomorrow's review.</div>`; }
+
+/* ---------- stats ---------- */
+function renderStats(){
+  setNavVisible(true);
+  const cal = Array.from({length:35},(_,i)=> Math.random()>.45 ? 1 : 0);
+  view().innerHTML = `<div class="fade">
+    <h1>Your progress 📊</h1>
+    <div class="row" style="margin:14px 0">
+      <div class="stat"><div class="n">142</div><div class="l">words mastered</div></div>
+      <div class="stat"><div class="n">38</div><div class="l">learning</div></div>
+    </div>
+    <div class="card">
+      <div style="font-weight:700">Review activity</div>
+      <p class="sub" style="margin:4px 0 12px">Last 5 weeks</p>
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px">
+        ${cal.map(v=>`<div style="aspect-ratio:1;border-radius:5px;background:${v?'linear-gradient(135deg,#6ea8fe,#8b7cff)':'#1b2431'}"></div>`).join("")}
+      </div>
+    </div>
+    <div class="card">
+      <div style="font-weight:700;margin-bottom:8px">Words to strengthen</div>
+      ${WORDS.map(w=>`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line)">
+        <span><b>${w.word}</b> <span class="muted" style="font-size:12px">${w.pos}</span></span>
+        <span class="muted" style="font-size:12px">due tomorrow</span></div>`).join("")}
+    </div>
+  </div>`;
+}
+
+/* ---------- utils ---------- */
+function shuffle(a){a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+/* boot */
+render();
+</script>
+</body>
+</html>
