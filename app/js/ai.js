@@ -53,14 +53,20 @@ async function callClaude({ system, user, schema, maxTokens = 600 }) {
 }
 
 function parseJson(text) {
-  try {
-    return JSON.parse(text);
-  } catch (_) {
-    // Salvage a JSON object if the model wrapped it in prose.
-    const m = text.match(/\{[\s\S]*\}/);
-    if (m) return JSON.parse(m[0]);
-    throw new Error("Could not parse AI response");
+  if (!text || !text.trim()) throw new Error("AI returned an empty response");
+  let t = text.trim();
+  // Strip a ```json ... ``` (or plain ```) fence if the model added one.
+  const fence = t.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if (fence) t = fence[1].trim();
+  // Try the whole thing, then the outermost { ... } slice.
+  try { return JSON.parse(t); } catch (_) {}
+  const first = t.indexOf("{");
+  const last = t.lastIndexOf("}");
+  if (first !== -1 && last > first) {
+    try { return JSON.parse(t.slice(first, last + 1)); } catch (_) {}
   }
+  // Surface what actually came back so the failure is diagnosable.
+  throw new Error("Couldn't read the AI reply: " + t.slice(0, 140));
 }
 
 const WORD_SCHEMA = {
@@ -85,12 +91,16 @@ export async function generateWord(theme, knownWords = []) {
       "You are a vocabulary coach. Produce a single useful, precise English " +
       "word worth learning. Give a clear one-sentence definition, an IPA " +
       "phonetic like /ɪˈfɛm(ə)rəl/, exactly two natural example sentences, " +
-      "and 3 close synonyms.",
+      "and 3 close synonyms.\n\n" +
+      "Respond with ONLY a JSON object, no markdown fences and no commentary, " +
+      'of the form: {"word": string, "partOfSpeech": string, "phonetic": ' +
+      'string, "definition": string, "examples": [string, string], ' +
+      '"synonyms": [string, string, string]}.',
     user:
-      `Theme: ${theme}. Pick one word an motivated adult learner would benefit ` +
+      `Theme: ${theme}. Pick one word a motivated adult learner would benefit ` +
       `from. Do NOT choose any of these already-known words: ${avoid || "(none)"}.`,
     schema: WORD_SCHEMA,
-    maxTokens: 500,
+    maxTokens: 600,
   });
   return parseJson(text);
 }
@@ -112,10 +122,12 @@ export async function gradeSentence(word, definition, sentence) {
       "You grade whether a learner used a target vocabulary word correctly " +
       "and naturally in their own sentence. Set correct=true only if the word " +
       "is present AND used with its actual meaning. Keep feedback to one warm, " +
-      "specific sentence (a nuance tip if correct, a concrete fix if not).",
+      "specific sentence (a nuance tip if correct, a concrete fix if not).\n\n" +
+      "Respond with ONLY a JSON object, no markdown fences and no commentary, " +
+      'of the form: {"correct": boolean, "feedback": string}.',
     user: `Target word: "${word}"\nMeaning: ${definition}\nLearner's sentence: "${sentence}"`,
     schema: GRADE_SCHEMA,
-    maxTokens: 250,
+    maxTokens: 400,
   });
   return parseJson(text);
 }

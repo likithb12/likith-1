@@ -1,7 +1,7 @@
 // Service worker: precache the app shell so review works offline.
 // AI calls (api.anthropic.com) are cross-origin and always hit the network.
 
-const CACHE = "lexicon-v1";
+const CACHE = "lexicon-v2";
 const ASSETS = [
   "./",
   "./index.html",
