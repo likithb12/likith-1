@@ -1,0 +1,14 @@
+{
+  "name": "Lexicon — vocab & teasers",
+  "short_name": "Lexicon",
+  "description": "Learn vocabulary with spaced repetition and brain teasers, powered by Claude.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0b0e14",
+  "theme_color": "#0b0e14",
+  "icons": [
+    { "src": "./icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
