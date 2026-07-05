@@ -1,0 +1,785 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trimester Tracker</title>
+</head>
+<body>
+<style>
+:root{
+  --bg:#F4F5F3; --surface:#FFFFFF; --ink:#1A1E26; --muted:#5B6472;
+  --line:#D8DCE1; --line2:#ECEEF0; --chip:#EEF0F2;
+  --accent:#2B5FD9; --accent-soft:rgba(43,95,217,.09);
+  --ok:#1E7A44; --ok-soft:rgba(30,122,68,.10);
+  --warn:#8F6408; --warn-soft:rgba(158,113,16,.12);
+  --bad:#BF3B2C; --bad-soft:rgba(191,59,44,.10);
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#12151A; --surface:#1A1F26; --ink:#E7EAEE; --muted:#8C95A3;
+    --line:#2B323C; --line2:#232932; --chip:#242B34;
+    --accent:#82A5F4; --accent-soft:rgba(130,165,244,.13);
+    --ok:#4FC581; --ok-soft:rgba(79,197,129,.14);
+    --warn:#D8A63E; --warn-soft:rgba(216,166,62,.14);
+    --bad:#E5705F; --bad-soft:rgba(229,112,95,.14);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="light"]{
+  --bg:#F4F5F3; --surface:#FFFFFF; --ink:#1A1E26; --muted:#5B6472;
+  --line:#D8DCE1; --line2:#ECEEF0; --chip:#EEF0F2;
+  --accent:#2B5FD9; --accent-soft:rgba(43,95,217,.09);
+  --ok:#1E7A44; --ok-soft:rgba(30,122,68,.10);
+  --warn:#8F6408; --warn-soft:rgba(158,113,16,.12);
+  --bad:#BF3B2C; --bad-soft:rgba(191,59,44,.10);
+  color-scheme:light;
+}
+:root[data-theme="dark"]{
+  --bg:#12151A; --surface:#1A1F26; --ink:#E7EAEE; --muted:#8C95A3;
+  --line:#2B323C; --line2:#232932; --chip:#242B34;
+  --accent:#82A5F4; --accent-soft:rgba(130,165,244,.13);
+  --ok:#4FC581; --ok-soft:rgba(79,197,129,.14);
+  --warn:#D8A63E; --warn-soft:rgba(216,166,62,.14);
+  --bad:#E5705F; --bad-soft:rgba(229,112,95,.14);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--ink);
+  font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+.mono{font-family:ui-monospace,"SF Mono","Cascadia Mono",Menlo,Consolas,"Liberation Mono",monospace;font-variant-numeric:tabular-nums}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:2px}
+@media (prefers-reduced-motion: reduce){ *,*::before,*::after{transition:none !important;animation:none !important} }
+
+/* ---------- header ---------- */
+.hdr{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:1px solid var(--line)}
+.hdr-in{max-width:760px;margin:0 auto;padding:10px 14px 0}
+.top-row{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+h1{margin:0;font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+   font-family:ui-monospace,"SF Mono","Cascadia Mono",Menlo,Consolas,monospace}
+.top-sub{font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-top:2px}
+.top-pct{font-size:22px;font-weight:700;line-height:1}
+.hairbar{height:3px;background:var(--line2);margin-top:8px}
+.hairbar i{display:block;height:100%;width:0;background:var(--accent);transition:width .25s ease}
+.tabs{display:flex;max-width:760px;margin:0 auto}
+.tabs button{
+  flex:1;background:none;border:none;border-bottom:2px solid transparent;
+  padding:10px 0 9px;color:var(--muted);
+  font-family:ui-monospace,"SF Mono","Cascadia Mono",Menlo,Consolas,monospace;
+  font-size:11px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;
+}
+.tabs button.on{color:var(--accent);border-bottom-color:var(--accent)}
+
+/* ---------- layout ---------- */
+main{max-width:760px;margin:0 auto;padding:4px 14px 90px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:3px;padding:14px;margin-top:12px}
+.sec-label{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:10.5px;font-weight:600;
+  letter-spacing:.11em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+.hint{font-size:10.5px;color:var(--muted);letter-spacing:.03em;margin:-6px 0 10px}
+.banner{max-width:760px;margin:10px auto -2px;padding:8px 12px;border:1px solid var(--warn);
+  background:var(--warn-soft);color:var(--warn);font-size:12px;border-radius:3px}
+.banner.bad{border-color:var(--bad);background:var(--bad-soft);color:var(--bad)}
+@media (max-width:788px){ .banner{margin-left:14px;margin-right:14px} }
+
+/* ---------- chips & bars ---------- */
+.chip{display:inline-block;padding:2px 6px;border-radius:2px;background:var(--chip);color:var(--muted);
+  font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:10px;font-weight:600;
+  letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;font-variant-numeric:tabular-nums}
+.chip.acc{background:var(--accent-soft);color:var(--accent)}
+.chip.ok{background:var(--ok-soft);color:var(--ok)}
+.chip.warn{background:var(--warn-soft);color:var(--warn)}
+.chip.bad{background:var(--bad-soft);color:var(--bad)}
+.bar{height:3px;background:var(--line2);border-radius:1px}
+.bar i{display:block;height:100%;width:0;background:var(--accent);border-radius:1px;transition:width .25s ease}
+.bar i.full{background:var(--ok)}
+
+/* ---------- overview ---------- */
+.u-row{padding:10px 0;border-top:1px solid var(--line2)}
+.u-row:first-of-type{border-top:none;padding-top:2px}
+.u-top{display:flex;align-items:baseline;gap:8px}
+.u-name{font-weight:600;font-size:14px;flex:1;min-width:0}
+.u-pct{font-size:14px;font-weight:700}
+.u-meta{font-size:10.5px;color:var(--muted);letter-spacing:.05em;margin-top:3px}
+.u-row .bar{margin-top:6px}
+.q-row{display:flex;gap:12px;padding:11px 0;border-top:1px solid var(--line2);width:100%;
+  background:none;border-left:none;border-right:none;border-bottom:none;text-align:left;color:inherit}
+.q-row:first-of-type{border-top:none}
+.q-rank{font-size:17px;font-weight:700;color:var(--muted);min-width:26px;padding-top:1px}
+.q-main{flex:1;min-width:0}
+.q-name{font-weight:600;font-size:14.5px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.q-meta{font-size:11px;color:var(--muted);letter-spacing:.04em;margin-top:3px;display:flex;flex-wrap:wrap;gap:8px}
+.q-next{font-size:12.5px;margin-top:4px;color:var(--accent)}
+.q-next.none{color:var(--muted);font-style:italic}
+.empty{color:var(--muted);font-size:13px;padding:6px 0}
+
+/* ---------- units ---------- */
+.unit-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.unit-title{font-weight:700;font-size:15px;flex:1;min-width:0}
+.unit-pct{font-weight:700;font-size:14px}
+.unit-head + .bar{margin:8px 0 4px}
+.ass{border-top:1px solid var(--line2);margin-top:10px;padding-top:2px}
+.ass-head{display:flex;align-items:center;gap:10px;width:100%;background:none;border:none;
+  padding:10px 0 8px;text-align:left;min-height:44px}
+.ass-info{flex:1;min-width:0}
+.ass-name{font-weight:600;font-size:14px}
+.ass-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.ass-pct{font-size:13px;font-weight:700;min-width:40px;text-align:right}
+.chev{color:var(--muted);font-size:11px;transition:transform .15s}
+.chev.open{transform:rotate(180deg)}
+.ass-body{padding:2px 0 12px}
+.ms-head{display:flex;align-items:center;gap:8px;margin-top:12px;padding:6px 8px;background:var(--accent-soft);
+  border-radius:2px;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.ms-head .chip{margin-left:auto}
+
+/* ---------- tasks ---------- */
+.task{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line2);min-height:44px}
+.task:first-child{border-top:none}
+.tk{display:flex;align-items:center;padding:6px 2px 6px 0;cursor:pointer}
+.tk input{width:18px;height:18px;margin:0;accent-color:var(--accent);cursor:pointer}
+.t-title{flex:1;min-width:0;font-size:14px;cursor:text;border-bottom:1px dashed transparent;overflow-wrap:anywhere}
+.t-title:hover{border-bottom-color:var(--muted)}
+.task.done .t-title{color:var(--muted);text-decoration:line-through}
+.t-edit{flex:1;min-width:0;border:1px solid var(--accent);border-radius:2px;padding:4px 6px;background:var(--surface);font-size:14px}
+.t-hours{width:52px;border:1px solid var(--line);border-radius:2px;background:var(--surface);
+  padding:5px 4px;text-align:right;font-size:12.5px;
+  font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-variant-numeric:tabular-nums}
+.t-hours::placeholder{color:var(--muted)}
+.t-ctl{display:flex;gap:2px}
+.t-ctl button{width:30px;height:30px;border:none;background:none;color:var(--muted);border-radius:2px;
+  font-size:13px;line-height:1;padding:0}
+.t-ctl button:hover{background:var(--line2);color:var(--ink)}
+.t-ctl button.armed{background:var(--bad-soft);color:var(--bad);font-size:10px;font-weight:700}
+.addform{display:flex;gap:8px;margin-top:8px}
+.addform input{flex:1;min-width:0;border:1px solid var(--line);border-radius:2px;background:var(--surface);
+  padding:9px 10px;font-size:13.5px}
+.addform input::placeholder{color:var(--muted)}
+.addform button{border:1px solid var(--line);background:var(--surface);border-radius:2px;width:44px;
+  font-size:16px;color:var(--accent);font-weight:700}
+.notask{font-size:12.5px;color:var(--muted);font-style:italic;padding:8px 0 2px}
+
+/* ---------- planner ---------- */
+.wk{margin-top:10px}
+.wk.now{border-color:var(--accent)}
+.wk-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.wk-id{font-size:12px;font-weight:700;letter-spacing:.08em}
+.wk.now .wk-id{color:var(--accent)}
+.wk-range{font-size:11px;color:var(--muted);letter-spacing:.05em;flex:1}
+.wk-hours{font-size:12px;font-weight:700}
+.wk-due{display:flex;align-items:baseline;gap:8px;font-size:11.5px;color:var(--muted);margin-top:7px;
+  font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-variant-numeric:tabular-nums}
+.wk-due .dot{color:var(--bad);font-size:9px}
+.wk-body{margin-top:4px}
+.wk-empty{font-size:12px;color:var(--muted);padding:6px 0 0}
+.t-week{border:1px solid var(--line);border-radius:2px;background:var(--surface);padding:5px 4px;
+  font-size:11.5px;max-width:110px;
+  font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+.bl-ass{font-size:10px;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;
+  font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;margin-top:1px}
+
+/* ---------- data ---------- */
+.kv{display:flex;gap:10px;padding:7px 0;border-top:1px solid var(--line2);font-size:13px;align-items:baseline}
+.kv:first-of-type{border-top:none}
+.kv b{min-width:110px;font-size:10.5px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);
+  font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;padding-top:1px}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:2px;padding:9px 14px;
+  font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:11px;font-weight:600;
+  letter-spacing:.08em;text-transform:uppercase;color:var(--ink);min-height:38px}
+.btn:hover{border-color:var(--muted)}
+.btn.danger{color:var(--bad);border-color:var(--bad)}
+.btn.danger.armed{background:var(--bad);color:#fff}
+.jsonbox{width:100%;margin-top:10px;border:1px solid var(--line);border-radius:2px;background:var(--bg);
+  color:var(--ink);padding:10px;font-size:11px;line-height:1.5;min-height:180px;resize:vertical;
+  font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+.toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:var(--ink);color:var(--bg);
+  padding:8px 16px;border-radius:3px;font-size:12px;z-index:50;
+  font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;letter-spacing:.05em}
+</style>
+
+<header class="hdr">
+  <div class="hdr-in">
+    <div class="top-row">
+      <div>
+        <h1>Trimester Tracker</h1>
+        <div class="top-sub mono" id="topSub"></div>
+      </div>
+      <div class="top-pct mono" id="topPct">0%</div>
+    </div>
+    <div class="hairbar"><i id="topBar"></i></div>
+  </div>
+  <nav class="tabs" id="tabs" aria-label="Sections">
+    <button type="button" data-tab="overview" class="on">Overview</button>
+    <button type="button" data-tab="units">Units</button>
+    <button type="button" data-tab="planner">Planner</button>
+    <button type="button" data-tab="data">Data</button>
+  </nav>
+</header>
+<div class="banner" id="banner" hidden></div>
+<main id="view"></main>
+
+<script>
+'use strict';
+/* =============== seed data (source of truth: unit outlines, T2 2026) =============== */
+const UNITS = [
+  { id:'epb', code:'EPB', name:'Engineering Project B', assessments:[
+    { id:'epb_pm', name:'Project Management & Close Out', weight:30, deadline:'2026-09-25',
+      milestones:[
+        { id:'m1', label:'Milestone 1', date:'2026-07-17' },
+        { id:'m2', label:'Milestone 2', date:'2026-07-31' },
+        { id:'m3', label:'Milestone 3', date:'2026-08-21' },
+        { id:'m4', label:'Milestone 4', date:'2026-09-25' } ] },
+    { id:'epb_exh',    name:'Project Exhibition', weight:30, deadline:'2026-09-29' },
+    { id:'epb_thesis', name:'Final Thesis',       weight:40, deadline:'2026-10-08' } ] },
+  { id:'see406', code:'SEE406', name:'Power System Analysis', assessments:[
+    { id:'a406_quiz', name:'Online Quiz',                  weight:20, deadline:'2026-08-03' },
+    { id:'a406_sim1', name:'Software Simulation · Part 1', weight:18, deadline:'2026-08-20' },
+    { id:'a406_sim2', name:'Software Simulation · Part 2', weight:12, deadline:'2026-09-10' },
+    { id:'a406_test', name:'Topic Test',                   weight:20, deadline:'2026-09-24' },
+    { id:'a406_rep',  name:'Project Report',               weight:30, deadline:'2026-10-02' } ] },
+  { id:'see416', code:'SEE416', name:'Electrical Systems Protection', assessments:[
+    { id:'a416_t1',   name:'Problem Solving Test 1', weight:20, deadline:'2026-08-17', note:'in class' },
+    { id:'a416_t2',   name:'Problem Solving Test 2', weight:20, deadline:'2026-09-21', note:'in class' },
+    { id:'a416_r1',   name:'Practical Report 1',     weight:15, deadline:'2026-08-07' },
+    { id:'a416_r2',   name:'Practical Report 2',     weight:15, deadline:'2026-09-04' },
+    { id:'a416_team', name:'Team Project Report',    weight:30, deadline:'2026-10-04' } ] }
+];
+const ASSESS = [];
+UNITS.forEach(u => u.assessments.forEach(a => { a.unit = u; ASSESS.push(a); }));
+const A_BY_ID = {}; ASSESS.forEach(a => A_BY_ID[a.id] = a);
+
+const MS_DAY = 86400000;
+const WEEK0 = new Date(2026, 6, 6, 12);   // Mon 6 Jul 2026, local noon
+const NWEEKS = 14;                        // through Sun 11 Oct 2026
+const FINAL = '2026-10-08';
+const KEY = 'trimester_tracker_v1';
+
+/* =============== state =============== */
+let state = { seq:1, tasks:[] };   // task: {id, aid, mid, title, done, hours, week, ord}
+const ui = { tab:'overview', open:new Set() };
+let pendingFocus = null, pendingScroll = null, pendingTop = false;
+
+/* =============== dates =============== */
+function pdate(s){ const p = s.split('-'); return new Date(+p[0], +p[1]-1, +p[2], 12); }
+function today0(){ const t = new Date(); return new Date(t.getFullYear(), t.getMonth(), t.getDate(), 12); }
+function daysUntil(s){ return Math.round((pdate(s) - today0()) / MS_DAY); }
+function fmtD(d){ return d.toLocaleDateString('en-GB', { day:'numeric', month:'short' }); }
+function fmt(s){ return fmtD(pdate(s)); }
+function fmtWD(s){ return pdate(s).toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short' }); }
+function weekStart(i){ return new Date(WEEK0.getTime() + i*7*MS_DAY); }
+function weekIdxOf(s){ return Math.floor((pdate(s) - WEEK0) / (7*MS_DAY)); }
+function curWeekIdx(){ return Math.floor((today0() - WEEK0) / (7*MS_DAY)); }
+function wkId(i){ return 'WK ' + String(i+1).padStart(2,'0'); }
+function wkRange(i){ const s = weekStart(i); return fmtD(s) + ' – ' + fmtD(new Date(s.getTime()+6*MS_DAY)); }
+
+/* =============== storage (artifact API > localStorage > memory) =============== */
+const store = {
+  mode:'memory', mem:null,
+  detect(){
+    try{
+      if (window.storage && typeof window.storage.get === 'function' && typeof window.storage.set === 'function'){
+        this.mode = 'artifact'; return;
+      }
+    }catch(e){}
+    try{
+      const k = '__tt_probe__';
+      localStorage.setItem(k,'1'); localStorage.removeItem(k);
+      this.mode = 'local';
+    }catch(e){ this.mode = 'memory'; }
+  },
+  async load(){
+    try{
+      if (this.mode === 'artifact'){
+        const r = await window.storage.get(KEY);
+        if (r == null) return null;
+        if (typeof r === 'string') return r;
+        if (typeof r === 'object' && typeof r.value === 'string') return r.value;
+        return null;
+      }
+      if (this.mode === 'local') return localStorage.getItem(KEY);
+      return this.mem;
+    }catch(e){ return this.mem; }
+  },
+  async save(json){
+    this.mem = json;
+    try{
+      if (this.mode === 'artifact') await window.storage.set(KEY, json);
+      else if (this.mode === 'local') localStorage.setItem(KEY, json);
+    }catch(e){ degrade(); }
+  },
+  async clear(){
+    this.mem = null;
+    try{
+      if (this.mode === 'artifact'){
+        if (typeof window.storage.delete === 'function') await window.storage.delete(KEY);
+        else await window.storage.set(KEY, '');
+      } else if (this.mode === 'local') localStorage.removeItem(KEY);
+    }catch(e){}
+  },
+  label(){
+    return this.mode === 'artifact' ? 'artifact storage API'
+         : this.mode === 'local'    ? 'browser localStorage'
+         : 'in-memory only (not saved)';
+  }
+};
+function degrade(){
+  store.mode = 'memory';
+  showBanner('Saving failed — running in-memory. Export your data from the Data tab.', true);
+  render();
+}
+function showBanner(msg, bad){
+  const b = document.getElementById('banner');
+  b.textContent = msg; b.hidden = false;
+  b.className = 'banner' + (bad ? ' bad' : '');
+}
+
+function save(){ store.save(JSON.stringify({ v:1, seq:state.seq, tasks:state.tasks })); }
+
+/* =============== derived =============== */
+function tasksFor(aid, mid){
+  const ts = state.tasks.filter(t => t.aid === aid && (mid === undefined || t.mid === mid));
+  ts.sort((a,b) => a.ord - b.ord);
+  return ts;
+}
+function byId(tid){ return state.tasks.find(t => t.id === tid); }
+function aProg(aid){
+  const ts = tasksFor(aid);
+  if (!ts.length) return null;
+  return ts.filter(t => t.done).length / ts.length * 100;
+}
+function aComplete(a){ return aProg(a.id) === 100; }
+function uProg(u){
+  let s = 0, w = 0;
+  u.assessments.forEach(a => { w += a.weight; s += a.weight * (aProg(a.id) || 0); });
+  return w ? s / w : 0;
+}
+function overall(){ return UNITS.reduce((s,u) => s + uProg(u), 0) / UNITS.length; }
+function effDeadline(a){
+  if (a.milestones){
+    const up = a.milestones.find(m => daysUntil(m.date) >= 0);
+    return up ? up.date : a.milestones[a.milestones.length-1].date;
+  }
+  return a.deadline;
+}
+/* priority: score = weight / max(days,1); overdue pinned; ties -> earlier deadline */
+function queue(){
+  const items = [];
+  for (const a of ASSESS){
+    if (aComplete(a)) continue;
+    const dl = effDeadline(a);
+    const d = daysUntil(dl);
+    const ts = tasksFor(a.id);
+    items.push({ a, dl, d, overdue:d < 0, score:a.weight / Math.max(d,1),
+                 next: ts.find(t => !t.done) || null, hasTasks: ts.length > 0 });
+  }
+  items.sort((x,y) => {
+    if (x.overdue !== y.overdue) return x.overdue ? -1 : 1;
+    if (x.overdue) return pdate(x.dl) - pdate(y.dl);
+    return (y.score - x.score) || (pdate(x.dl) - pdate(y.dl));
+  });
+  return items;
+}
+
+/* =============== mutations =============== */
+function addTask(aid, mid, title){
+  const bucket = tasksFor(aid, mid);
+  const ord = bucket.length ? bucket[bucket.length-1].ord + 1 : 1;
+  state.tasks.push({ id:'t' + (state.seq++), aid, mid, title, done:false, hours:null, week:null, ord });
+  save(); render();
+}
+function removeTask(tid){ state.tasks = state.tasks.filter(t => t.id !== tid); save(); render(); }
+function moveTask(tid, dir){
+  const t = byId(tid); if (!t) return;
+  const bucket = tasksFor(t.aid, t.mid);
+  const i = bucket.indexOf(t), j = i + dir;
+  if (j < 0 || j >= bucket.length) return;
+  const o = bucket[j].ord; bucket[j].ord = t.ord; t.ord = o;
+  save(); render();
+}
+
+/* =============== html helpers =============== */
+function esc(s){ return String(s).replace(/[&<>"']/g, c =>
+  ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function dueChip(d){
+  const cls = d < 0 ? 'bad' : d <= 10 ? 'warn' : '';
+  const txt = d < 0 ? 'OVERDUE ' + (-d) + 'd' : d === 0 ? 'TODAY' : d + 'd left';
+  return '<span class="chip ' + cls + '">' + txt + '</span>';
+}
+function barHtml(pct, extra){
+  const p = Math.max(0, Math.min(100, pct || 0));
+  return '<div class="bar ' + (extra||'') + '"><i style="width:' + p + '%" class="' + (p >= 100 ? 'full':'') + '"></i></div>';
+}
+function hoursInput(t){
+  return '<input class="t-hours" data-hours="' + t.id + '" type="number" inputmode="decimal" min="0" step="0.5"' +
+         ' placeholder="h" aria-label="Estimated hours" value="' + (t.hours != null ? t.hours : '') + '">';
+}
+function taskRow(t, opts){
+  opts = opts || {};
+  let h = '<div class="task' + (t.done ? ' done':'') + '">';
+  h += '<label class="tk"><input type="checkbox" data-toggle="' + t.id + '"' + (t.done ? ' checked':'') + '></label>';
+  h += '<span class="t-title" data-edit="' + t.id + '" title="Tap to edit">' + esc(t.title) + '</span>';
+  h += hoursInput(t);
+  if (opts.weekSel) h += weekSelect(t);
+  if (!opts.noCtl){
+    h += '<span class="t-ctl">'
+      + '<button type="button" data-up="' + t.id + '" aria-label="Move up">↑</button>'
+      + '<button type="button" data-down="' + t.id + '" aria-label="Move down">↓</button>'
+      + '<button type="button" data-del="' + t.id + '" aria-label="Delete task">✕</button></span>';
+  }
+  return h + '</div>';
+}
+function weekSelect(t){
+  let h = '<select class="t-week" data-week="' + t.id + '" aria-label="Assign to week"><option value="">backlog</option>';
+  for (let i = 0; i < NWEEKS; i++){
+    h += '<option value="' + i + '"' + (t.week === i ? ' selected':'') + '>' + wkId(i) + ' · ' + fmtD(weekStart(i)) + '</option>';
+  }
+  return h + '</select>';
+}
+function addForm(aid, mid){
+  const key = aid + '|' + (mid || '');
+  return '<form class="addform" data-add data-aid="' + aid + '" data-mid="' + (mid || '') + '">'
+    + '<input data-addkey="' + key + '" placeholder="Add a task…" maxlength="140" aria-label="New task">'
+    + '<button type="submit" aria-label="Add task">+</button></form>';
+}
+
+/* =============== views =============== */
+function vOverview(){
+  let h = '<section class="card"><div class="sec-label">Units · grade-weighted progress</div>';
+  for (const u of UNITS){
+    const p = uProg(u);
+    const done = u.assessments.filter(aComplete).length;
+    h += '<div class="u-row"><div class="u-top">'
+      + '<span class="chip acc">' + u.code + '</span>'
+      + '<span class="u-name">' + esc(u.name) + '</span>'
+      + '<span class="u-pct mono">' + Math.round(p) + '%</span></div>'
+      + barHtml(p)
+      + '<div class="u-meta mono">' + done + '/' + u.assessments.length + ' assessments complete</div></div>';
+  }
+  h += '</section>';
+
+  const q = queue();
+  h += '<section class="card"><div class="sec-label">What’s next</div>'
+    + '<div class="hint mono">priority = weight ÷ days left · overdue pinned · completed drop out</div>';
+  if (!q.length) h += '<div class="empty">Everything is complete. Trimester closed out.</div>';
+  q.forEach((it, i) => {
+    const a = it.a;
+    const msNote = a.milestones && it.dl !== a.deadline ? ' (next milestone)' : '';
+    h += '<button type="button" class="q-row" data-goto="' + a.id + '">'
+      + '<span class="q-rank mono">' + String(i+1).padStart(2,'0') + '</span>'
+      + '<span class="q-main"><span class="q-name">' + esc(a.name)
+      + ' <span class="chip">' + a.unit.code + '</span></span>'
+      + '<span class="q-meta mono"><span>' + a.weight + '%</span>'
+      + '<span>due ' + fmt(it.dl) + msNote + '</span>' + dueChip(it.d)
+      + '<span>p=' + it.score.toFixed(2) + '</span></span>'
+      + (it.next
+          ? '<span class="q-next">→ ' + esc(it.next.title) + '</span>'
+          : '<span class="q-next none">' + (it.hasTasks ? '→ all tasks done — review & submit' : 'no tasks yet — tap to add') + '</span>')
+      + '</span></button>';
+  });
+  h += '</section>';
+  return h;
+}
+
+function vUnits(){
+  let h = '';
+  for (const u of UNITS){
+    h += '<section class="card"><div class="unit-head">'
+      + '<span class="chip acc">' + u.code + '</span>'
+      + '<span class="unit-title">' + esc(u.name) + '</span>'
+      + '<span class="unit-pct mono">' + Math.round(uProg(u)) + '%</span></div>'
+      + barHtml(uProg(u));
+    for (const a of u.assessments){
+      const p = aProg(a.id);
+      const ts = tasksFor(a.id);
+      const open = ui.open.has(a.id);
+      const d = daysUntil(effDeadline(a));
+      h += '<div class="ass" id="ass-' + a.id + '">'
+        + '<button type="button" class="ass-head" data-expand="' + a.id + '" aria-expanded="' + open + '">'
+        + '<span class="ass-info"><span class="ass-name">' + esc(a.name) + '</span>'
+        + '<span class="ass-meta"><span class="chip">' + a.weight + '%</span>'
+        + '<span class="chip">' + (a.milestones ? 'next ' : 'due ') + fmt(effDeadline(a)) + '</span>'
+        + (a.note ? '<span class="chip">' + a.note + '</span>' : '')
+        + (p === 100 ? '<span class="chip ok">DONE</span>' : dueChip(d))
+        + '<span class="chip">' + ts.filter(t=>t.done).length + '/' + ts.length + ' tasks</span>'
+        + '</span></span>'
+        + '<span class="ass-pct mono">' + (p == null ? '—' : Math.round(p) + '%') + '</span>'
+        + '<span class="chev' + (open ? ' open':'') + '">▾</span></button>'
+        + barHtml(p || 0);
+      if (open){
+        h += '<div class="ass-body">';
+        if (a.milestones){
+          for (const m of a.milestones){
+            const md = daysUntil(m.date);
+            h += '<div class="ms-head mono">' + m.label + ' · ' + fmt(m.date) + dueChip(md) + '</div>';
+            const mts = tasksFor(a.id, m.id);
+            mts.forEach(t => h += taskRow(t));
+            if (!mts.length) h += '<div class="notask">No tasks yet for this milestone.</div>';
+            h += addForm(a.id, m.id);
+          }
+        } else {
+          ts.forEach(t => h += taskRow(t));
+          if (!ts.length) h += '<div class="notask">No tasks yet — break this assessment into steps.</div>';
+          h += addForm(a.id, null);
+        }
+        h += '</div>';
+      }
+      h += '</div>';
+    }
+    h += '</section>';
+  }
+  return h;
+}
+
+function vPlanner(){
+  const rank = {}; queue().forEach((it,i) => rank[it.a.id] = i);
+  const backlog = state.tasks.filter(t => t.week == null && !t.done)
+    .sort((a,b) => (rank[a.aid] ?? 99) - (rank[b.aid] ?? 99) || a.ord - b.ord);
+
+  let h = '<section class="card"><div class="sec-label">Backlog · unscheduled tasks</div>'
+    + '<div class="hint mono">ordered by priority · assign each task to a week</div>';
+  if (!backlog.length) h += '<div class="empty">Backlog clear — every open task is scheduled.</div>';
+  backlog.forEach(t => {
+    const a = A_BY_ID[t.aid];
+    h += '<div class="task"><span style="flex:1;min-width:0">'
+      + '<span class="t-title" data-edit="' + t.id + '">' + esc(t.title) + '</span>'
+      + '<span class="bl-ass">' + a.unit.code + ' · ' + esc(a.name) + ' · due ' + fmt(effDeadline(a)) + '</span></span>'
+      + hoursInput(t) + weekSelect(t) + '</div>';
+  });
+  h += '</section>';
+
+  const cw = curWeekIdx();
+  for (let i = 0; i < NWEEKS; i++){
+    const wts = state.tasks.filter(t => t.week === i).sort((a,b) => a.ord - b.ord);
+    const hours = wts.reduce((s,t) => s + (t.hours || 0), 0);
+    const due = [];
+    for (const a of ASSESS){
+      if (a.milestones){
+        a.milestones.forEach(m => { if (weekIdxOf(m.date) === i)
+          due.push(a.unit.code + ' ' + a.name + ' · ' + m.label + ' — ' + fmtWD(m.date)); });
+      } else if (weekIdxOf(a.deadline) === i){
+        due.push(a.unit.code + ' ' + a.name + ' (' + a.weight + '%) — ' + fmtWD(a.deadline));
+      }
+    }
+    h += '<section class="card wk' + (i === cw ? ' now':'') + '">'
+      + '<div class="wk-head mono"><span class="wk-id">' + wkId(i) + (i === cw ? ' · NOW':'') + '</span>'
+      + '<span class="wk-range">' + wkRange(i) + '</span>'
+      + '<span class="wk-hours">' + (hours ? 'Σ ' + (Math.round(hours*10)/10) + ' h' : '—') + '</span></div>';
+    due.forEach(s => h += '<div class="wk-due"><span class="dot">◆</span><span>' + esc(s) + '</span></div>');
+    if (wts.length){
+      h += '<div class="wk-body">';
+      wts.forEach(t => {
+        h += '<div class="task' + (t.done ? ' done':'') + '">'
+          + '<label class="tk"><input type="checkbox" data-toggle="' + t.id + '"' + (t.done ? ' checked':'') + '></label>'
+          + '<span style="flex:1;min-width:0"><span class="t-title" data-edit="' + t.id + '">' + esc(t.title) + '</span>'
+          + '<span class="bl-ass">' + A_BY_ID[t.aid].unit.code + ' · ' + esc(A_BY_ID[t.aid].name) + '</span></span>'
+          + hoursInput(t) + weekSelect(t) + '</div>';
+      });
+      h += '</div>';
+    } else if (!due.length){
+      h += '<div class="wk-empty">—</div>';
+    }
+    h += '</section>';
+  }
+  return h;
+}
+
+function exportPayload(){
+  return JSON.stringify({
+    app:'trimester-tracker', version:1,
+    exported:new Date().toISOString(),
+    seq:state.seq, tasks:state.tasks
+  }, null, 2);
+}
+function vData(){
+  const done = state.tasks.filter(t => t.done).length;
+  return '<section class="card"><div class="sec-label">Storage</div>'
+    + '<div class="kv"><b>Mode</b><span class="mono">' + store.label() + '</span></div>'
+    + '<div class="kv"><b>Tasks</b><span class="mono">' + state.tasks.length + ' total · ' + done + ' done</span></div>'
+    + '<div class="kv"><b>Autosave</b><span class="mono">on every change</span></div>'
+    + '</section>'
+    + '<section class="card"><div class="sec-label">Export</div>'
+    + '<div class="btnrow"><button type="button" class="btn" data-act="copy">Copy JSON</button>'
+    + '<button type="button" class="btn" data-act="download">Download .json</button></div>'
+    + '<textarea class="jsonbox" id="jsonbox" readonly spellcheck="false">' + esc(exportPayload()) + '</textarea>'
+    + '</section>'
+    + '<section class="card"><div class="sec-label">Reset</div>'
+    + '<div class="hint mono">deletes all tasks, hours and week assignments · seed assessments stay</div>'
+    + '<div class="btnrow"><button type="button" class="btn danger" data-act="reset">Reset all data</button></div>'
+    + '</section>';
+}
+
+/* =============== render =============== */
+function render(){
+  const y = window.scrollY;
+  document.getElementById('topPct').textContent = Math.round(overall()) + '%';
+  document.getElementById('topBar').style.width = Math.min(100, overall()) + '%';
+  const cw = curWeekIdx();
+  const wkTxt = cw < 0 ? 'term starts ' + fmtD(WEEK0) : cw >= NWEEKS ? 'term ended' : wkId(cw) + '/' + NWEEKS;
+  const df = daysUntil(FINAL);
+  document.getElementById('topSub').textContent =
+    fmtD(today0()) + ' · ' + wkTxt + ' · ' + (df >= 0 ? df + 'd to thesis' : 'trimester complete');
+  document.querySelectorAll('#tabs button').forEach(b =>
+    b.classList.toggle('on', b.dataset.tab === ui.tab));
+  const v = document.getElementById('view');
+  v.innerHTML = ui.tab === 'overview' ? vOverview()
+             : ui.tab === 'units'     ? vUnits()
+             : ui.tab === 'planner'   ? vPlanner()
+             : vData();
+  window.scrollTo(0, pendingTop ? 0 : y);
+  pendingTop = false;
+  if (pendingFocus){
+    const el = v.querySelector('[data-addkey="' + pendingFocus + '"]');
+    if (el) el.focus();
+    pendingFocus = null;
+  }
+  if (pendingScroll){
+    const el = document.getElementById(pendingScroll);
+    if (el) setTimeout(() => el.scrollIntoView({ block:'start' }), 30);
+    pendingScroll = null;
+  }
+}
+
+/* =============== interactions =============== */
+function startEdit(span){
+  const t = byId(span.dataset.edit); if (!t) return;
+  const inp = document.createElement('input');
+  inp.className = 't-edit'; inp.value = t.title; inp.maxLength = 140;
+  span.replaceWith(inp); inp.focus();
+  let closed = false;
+  const commit = () => {
+    if (closed) return; closed = true;
+    const v = inp.value.trim();
+    if (v && v !== t.title){ t.title = v; save(); }
+    render();
+  };
+  inp.addEventListener('blur', commit);
+  inp.addEventListener('keydown', e => {
+    if (e.key === 'Enter'){ e.preventDefault(); commit(); }
+    if (e.key === 'Escape'){ closed = true; render(); }
+  });
+}
+function arm(btn, fn, label){
+  if (btn.dataset.armed){ delete btn.dataset.armed; fn(); return; }
+  const orig = btn.textContent;
+  btn.dataset.armed = '1'; btn.classList.add('armed'); btn.textContent = label;
+  setTimeout(() => {
+    if (btn.isConnected && btn.dataset.armed){
+      delete btn.dataset.armed; btn.classList.remove('armed'); btn.textContent = orig;
+    }
+  }, 2600);
+}
+function toast(msg){
+  const t = document.createElement('div');
+  t.className = 'toast'; t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 1800);
+}
+
+document.getElementById('tabs').addEventListener('click', e => {
+  const b = e.target.closest('button[data-tab]');
+  if (b){ ui.tab = b.dataset.tab; pendingTop = true; render(); }
+});
+
+document.getElementById('view').addEventListener('click', e => {
+  const q = s => e.target.closest(s);
+  let el;
+  if ((el = q('[data-goto]'))){
+    const aid = el.dataset.goto;
+    ui.tab = 'units'; ui.open.add(aid); pendingScroll = 'ass-' + aid;
+    render(); return;
+  }
+  if ((el = q('[data-expand]'))){
+    const aid = el.dataset.expand;
+    ui.open.has(aid) ? ui.open.delete(aid) : ui.open.add(aid);
+    render(); return;
+  }
+  if ((el = q('[data-up]')))   { moveTask(el.dataset.up, -1); return; }
+  if ((el = q('[data-down]'))) { moveTask(el.dataset.down, 1); return; }
+  if ((el = q('[data-del]')))  { arm(el, () => removeTask(el.dataset.del), 'sure?'); return; }
+  if ((el = q('.t-title[data-edit]'))) { startEdit(el); return; }
+  if ((el = q('[data-act]'))){
+    const act = el.dataset.act;
+    if (act === 'copy'){
+      const txt = exportPayload();
+      const fallback = () => {
+        const box = document.getElementById('jsonbox');
+        if (box){ box.focus(); box.select(); try{ document.execCommand('copy'); toast('Copied'); }catch(err){ toast('Select & copy manually'); } }
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText)
+        navigator.clipboard.writeText(txt).then(() => toast('Copied'), fallback);
+      else fallback();
+    }
+    if (act === 'download'){
+      try{
+        const blob = new Blob([exportPayload()], { type:'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob); a.download = 'trimester-tracker.json';
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+      }catch(err){ toast('Download blocked — use Copy JSON'); }
+    }
+    if (act === 'reset'){
+      arm(el, () => {
+        state.tasks = []; state.seq = 1;
+        store.clear(); toast('All data cleared'); render();
+      }, 'Tap again to erase everything');
+    }
+    return;
+  }
+});
+
+document.getElementById('view').addEventListener('change', e => {
+  const t = e.target;
+  if (t.dataset.toggle){
+    const tk = byId(t.dataset.toggle);
+    if (tk){ tk.done = t.checked; save(); render(); }
+  } else if (t.dataset.hours !== undefined && t.dataset.hours !== ''){
+    const tk = byId(t.dataset.hours);
+    if (tk){
+      const v = parseFloat(t.value);
+      tk.hours = isFinite(v) && v >= 0 ? v : null;
+      save(); render();
+    }
+  } else if (t.dataset.week !== undefined && t.dataset.week !== ''){
+    const tk = byId(t.dataset.week);
+    if (tk){ tk.week = t.value === '' ? null : +t.value; save(); render(); }
+  }
+});
+
+document.getElementById('view').addEventListener('submit', e => {
+  const f = e.target.closest('form[data-add]');
+  if (!f) return;
+  e.preventDefault();
+  const inp = f.querySelector('input');
+  const title = inp.value.trim();
+  if (!title) return;
+  pendingFocus = inp.dataset.addkey;
+  addTask(f.dataset.aid, f.dataset.mid || null, title);
+});
+
+/* =============== init =============== */
+(async function init(){
+  store.detect();
+  if (store.mode === 'memory')
+    showBanner('Storage unavailable — progress will not survive closing this page. Export from the Data tab.', true);
+  try{
+    const raw = await store.load();
+    if (raw){
+      const d = JSON.parse(raw);
+      if (d && Array.isArray(d.tasks)){
+        state.tasks = d.tasks.filter(t => t && A_BY_ID[t.aid]);
+        state.seq = typeof d.seq === 'number' ? d.seq : state.tasks.length + 1;
+      }
+    }
+  }catch(e){ /* corrupt or empty store: start fresh */ }
+  render();
+})();
+</script>
+</body>
+</html>
