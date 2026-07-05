@@ -164,24 +164,55 @@ main{max-width:760px;margin:0 auto;padding:4px 14px 90px}
   font-size:16px;color:var(--accent);font-weight:700}
 .notask{font-size:12.5px;color:var(--muted);font-style:italic;padding:8px 0 2px}
 
-/* ---------- planner ---------- */
-.wk{margin-top:10px}
-.wk.now{border-color:var(--accent)}
-.wk-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
-.wk-id{font-size:12px;font-weight:700;letter-spacing:.08em}
-.wk.now .wk-id{color:var(--accent)}
-.wk-range{font-size:11px;color:var(--muted);letter-spacing:.05em;flex:1}
-.wk-hours{font-size:12px;font-weight:700}
-.wk-due{display:flex;align-items:baseline;gap:8px;font-size:11.5px;color:var(--muted);margin-top:7px;
-  font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-variant-numeric:tabular-nums}
-.wk-due .dot{color:var(--bad);font-size:9px}
-.wk-body{margin-top:4px}
-.wk-empty{font-size:12px;color:var(--muted);padding:6px 0 0}
+/* ---------- planner (week calendar) ---------- */
+.cal-nav{display:flex;align-items:center;gap:8px}
+.cal-nav button{border:1px solid var(--line);background:var(--surface);border-radius:2px;min-width:38px;height:36px;
+  color:var(--ink);font-size:15px;padding:0}
+.cal-nav button:disabled{opacity:.35}
+.cal-nav button.today{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:0 10px;color:var(--accent)}
+.cal-title{flex:1;text-align:center;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;line-height:1.3}
+.cal-title small{display:block;font-size:10px;color:var(--muted);font-weight:600;letter-spacing:.06em}
+.cal-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-top:12px;border:1px solid var(--line);
+  border-radius:3px;background:var(--surface)}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(96px,1fr));min-width:680px}
+.cal-day{border-left:1px solid var(--line2);padding:0 5px 10px;min-height:190px}
+.cal-day:first-child{border-left:none}
+.cal-day.today{background:var(--accent-soft)}
+.cal-dh{padding:7px 2px 6px;border-bottom:1px solid var(--line2);margin-bottom:6px;display:flex;align-items:baseline;gap:5px}
+.cal-dh .dw{font-size:9.5px;font-weight:700;letter-spacing:.09em;color:var(--muted);text-transform:uppercase}
+.cal-dh .dn{font-size:13px;font-weight:700}
+.cal-day.today .dn{color:var(--accent)}
+.cal-dh .dh-h{margin-left:auto;font-size:9.5px;color:var(--muted);font-weight:700}
+.dl{border-left:2px solid var(--bad);background:var(--bad-soft);color:var(--bad);border-radius:2px;
+  padding:3px 5px;margin:0 0 4px;font-size:9.5px;font-weight:600;line-height:1.35;overflow-wrap:anywhere;
+  font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+.ev{border-left:2px solid var(--accent);background:var(--accent-soft);border-radius:2px;padding:4px 6px;margin:0 0 4px;
+  font-size:11.5px;line-height:1.35;cursor:pointer;overflow-wrap:anywhere}
+.ev .ev-h{display:block;font-size:9.5px;color:var(--muted);margin-top:2px;
+  font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+.ev.done{opacity:.55}
+.ev.done .ev-t{text-decoration:line-through}
+.ev.sel{outline:2px solid var(--accent);outline-offset:1px}
+.ev-ctl{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px}
+.ev-ctl select,.ev-ctl input{font-size:10.5px;padding:4px 3px;border:1px solid var(--line);border-radius:2px;
+  background:var(--surface);max-width:96px;
+  font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+.ev-ctl .t-hours{width:46px}
+.ev-ctl button{border:none;background:none;color:var(--bad);font-size:10px;font-weight:700;padding:4px 2px;
+  letter-spacing:.06em;text-transform:uppercase}
+.anytime{margin-top:12px}
+.anytime .ev{max-width:440px}
 .t-week{border:1px solid var(--line);border-radius:2px;background:var(--surface);padding:5px 4px;
   font-size:11.5px;max-width:110px;
   font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
-.bl-ass{font-size:10px;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;
-  font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;margin-top:1px}
+.bl-ass{display:block;font-size:10px;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;
+  font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;margin-top:2px}
+/* ---------- sync ---------- */
+.sync-note{font-size:11.5px;color:var(--muted);line-height:1.6;margin-top:8px}
+.sync-note b{color:var(--ink);font-weight:600}
+.tok{width:100%;margin-top:10px;border:1px solid var(--line);border-radius:2px;background:var(--surface);
+  padding:9px 10px;font-size:12.5px;font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+.sync-ok{color:var(--ok)} .sync-err{color:var(--bad)}
 
 /* ---------- data ---------- */
 .kv{display:flex;gap:10px;padding:7px 0;border-top:1px solid var(--line2);font-size:13px;align-items:baseline}
@@ -259,10 +290,13 @@ const WEEK0 = new Date(2026, 6, 6, 12);   // Mon 6 Jul 2026, local noon
 const NWEEKS = 14;                        // through Sun 11 Oct 2026
 const FINAL = '2026-10-08';
 const KEY = 'trimester_tracker_v1';
+const KEY_TOKEN = 'trimester_tracker_token';
+/* device sync target: a data-only branch so pushes never trigger the Pages build */
+const SY = { owner:'likithb12', repo:'likith-1', branch:'tracker-data', path:'state.json' };
 
 /* =============== state =============== */
-let state = { seq:1, tasks:[] };   // task: {id, aid, mid, title, done, hours, week, ord}
-const ui = { tab:'overview', open:new Set() };
+let state = { seq:1, tasks:[], updated:null };   // task: {id, aid, mid, title, done, hours, week, day, ord}
+const ui = { tab:'overview', open:new Set(), pweek:null, selTask:null };
 let pendingFocus = null, pendingScroll = null, pendingTop = false;
 
 /* =============== dates =============== */
@@ -339,7 +373,129 @@ function showBanner(msg, bad){
   b.className = 'banner' + (bad ? ' bad' : '');
 }
 
-function save(){ store.save(JSON.stringify({ v:1, seq:state.seq, tasks:state.tasks })); }
+function snapshot(){ return JSON.stringify({ v:1, seq:state.seq, tasks:state.tasks, updated:state.updated }); }
+function persistLocal(){ store.save(snapshot()); }
+function save(){
+  state.updated = new Date().toISOString();
+  persistLocal();
+  sync.schedule();
+}
+function normalize(d){
+  const tasks = (Array.isArray(d.tasks) ? d.tasks : []).filter(t => t && A_BY_ID[t.aid]);
+  return { v:1, seq: typeof d.seq === 'number' ? d.seq : tasks.length + 1, tasks, updated: d.updated || null };
+}
+
+/* =============== device sync via GitHub contents API =============== */
+function b64e(s){
+  const b = new TextEncoder().encode(s); let x = '';
+  for (let i = 0; i < b.length; i++) x += String.fromCharCode(b[i]);
+  return btoa(x);
+}
+function b64d(s){
+  const bin = atob(s.replace(/\s/g, ''));
+  const arr = Uint8Array.from(bin, c => c.charCodeAt(0));
+  return new TextDecoder().decode(arr);
+}
+const sync = {
+  token:null, sha:null, timer:null, status:'off', msg:'', last:null, lastPull:0,
+  init(){
+    try{ this.token = localStorage.getItem(KEY_TOKEN) || null; }catch(e){}
+    if (this.token) this.status = 'idle';
+  },
+  cpath(){ return '/repos/' + SY.owner + '/' + SY.repo + '/contents/' + SY.path; },
+  api(p, opt){
+    return fetch('https://api.github.com' + p, Object.assign({
+      headers:{ 'Authorization':'Bearer ' + this.token, 'Accept':'application/vnd.github+json',
+                'X-GitHub-Api-Version':'2022-11-28' }
+    }, opt));
+  },
+  set(st, msg){
+    this.status = st; this.msg = msg || '';
+    if (st === 'ok') this.last = Date.now();
+    const line = document.getElementById('syncline');
+    if (line){ line.textContent = this.text(); line.className = 'mono ' + (st === 'err' ? 'sync-err' : st === 'ok' ? 'sync-ok' : ''); }
+    renderHead();
+  },
+  text(){
+    if (this.status === 'err') return 'error — ' + this.msg;
+    if (this.status === 'sync') return 'syncing…';
+    if (this.status === 'ok'){
+      const m = Math.round((Date.now() - this.last) / 60000);
+      return 'synced ' + (m < 1 ? 'just now' : m + ' min ago');
+    }
+    return this.token ? 'connected — waiting for first sync' : 'off';
+  },
+  connect(tok){
+    this.token = tok; this.sha = null;
+    try{ localStorage.setItem(KEY_TOKEN, tok); }catch(e){}
+    this.set('idle'); this.pull(); render();
+  },
+  disconnect(){
+    this.token = null; this.sha = null; clearTimeout(this.timer);
+    try{ localStorage.removeItem(KEY_TOKEN); }catch(e){}
+    this.set('off'); render();
+  },
+  async ensureBranch(){
+    const r = await this.api('/repos/' + SY.owner + '/' + SY.repo + '/git/ref/heads/' + SY.branch);
+    if (r.status === 200) return;
+    const m = await this.api('/repos/' + SY.owner + '/' + SY.repo + '/git/ref/heads/master');
+    if (!m.ok) throw new Error('cannot read repo (HTTP ' + m.status + ')');
+    const sha = (await m.json()).object.sha;
+    const c = await this.api('/repos/' + SY.owner + '/' + SY.repo + '/git/refs',
+      { method:'POST', body: JSON.stringify({ ref:'refs/heads/' + SY.branch, sha }) });
+    if (!c.ok && c.status !== 422) throw new Error('cannot create branch (HTTP ' + c.status + ')');
+  },
+  schedule(){
+    if (!this.token) return;
+    clearTimeout(this.timer);
+    this.set('sync');
+    this.timer = setTimeout(() => this.push(), 1800);
+  },
+  adopt(remote){
+    state = normalize(remote); persistLocal(); render();
+  },
+  async pull(force){
+    if (!this.token) return;
+    if (!force && Date.now() - this.lastPull < 20000) return;
+    this.lastPull = Date.now(); this.set('sync');
+    try{
+      const res = await this.api(this.cpath() + '?ref=' + SY.branch + '&_=' + Date.now());
+      if (res.status === 404){ this.sha = null; if (state.updated) await this.push(); else this.set('ok'); return; }
+      if (res.status === 401 || res.status === 403) throw new Error('token rejected (HTTP ' + res.status + ')');
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const j = await res.json(); this.sha = j.sha;
+      const remote = JSON.parse(b64d(j.content));
+      if (remote.updated && (!state.updated || remote.updated > state.updated)) this.adopt(remote);
+      else if (state.updated && (!remote.updated || state.updated > remote.updated)){ await this.push(); return; }
+      this.set('ok');
+    }catch(e){ this.set('err', e.message); }
+  },
+  async push(){
+    if (!this.token) return;
+    this.set('sync');
+    try{
+      await this.ensureBranch();
+      const body = { message:'tracker sync', branch:SY.branch, content:b64e(snapshot()) };
+      if (this.sha) body.sha = this.sha;
+      let res = await this.api(this.cpath(), { method:'PUT', body: JSON.stringify(body) });
+      if (res.status === 409 || res.status === 422){
+        /* stale sha: another device pushed — re-read and let the newer state win */
+        const cur = await this.api(this.cpath() + '?ref=' + SY.branch + '&_=' + Date.now());
+        if (cur.ok){
+          const j = await cur.json(); this.sha = j.sha;
+          const remote = JSON.parse(b64d(j.content));
+          if (remote.updated && (!state.updated || remote.updated > state.updated)){ this.adopt(remote); this.set('ok'); return; }
+          body.sha = this.sha;
+          res = await this.api(this.cpath(), { method:'PUT', body: JSON.stringify(body) });
+        }
+      }
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const j = await res.json();
+      this.sha = j.content && j.content.sha || this.sha;
+      this.set('ok');
+    }catch(e){ this.set('err', e.message); }
+  }
+};
 
 /* =============== derived =============== */
 function tasksFor(aid, mid){
@@ -441,6 +597,27 @@ function weekSelect(t){
   }
   return h + '</select>';
 }
+function daySelect(t){
+  const D = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  let h = '<select data-day="' + t.id + '" aria-label="Assign to day"><option value="">anytime</option>';
+  for (let i = 0; i < 7; i++) h += '<option value="' + i + '"' + (t.day === i ? ' selected':'') + '>' + D[i] + '</option>';
+  return h + '</select>';
+}
+function r1(x){ return Math.round(x * 10) / 10; }
+function evBlock(t){
+  const a = A_BY_ID[t.aid];
+  const sel = ui.selTask === t.id;
+  let h = '<div class="ev' + (t.done ? ' done':'') + (sel ? ' sel':'') + '" data-sel="' + t.id + '">'
+    + '<span class="ev-t">' + esc(t.title) + '</span>'
+    + '<span class="ev-h">' + a.unit.code + (t.hours != null ? ' · ' + t.hours + 'h' : '') + '</span>';
+  if (sel){
+    h += '<div class="ev-ctl">'
+      + '<label class="tk"><input type="checkbox" data-toggle="' + t.id + '"' + (t.done ? ' checked':'') + '></label>'
+      + daySelect(t) + weekSelect(t) + hoursInput(t)
+      + '<button type="button" data-del="' + t.id + '">del</button></div>';
+  }
+  return h + '</div>';
+}
 function addForm(aid, mid){
   const key = aid + '|' + (mid || '');
   return '<form class="addform" data-add data-aid="' + aid + '" data-mid="' + (mid || '') + '">'
@@ -537,12 +714,57 @@ function vUnits(){
 }
 
 function vPlanner(){
+  if (ui.pweek == null) ui.pweek = Math.min(Math.max(curWeekIdx(), 0), NWEEKS - 1);
+  const w = ui.pweek, ws = weekStart(w), cw = curWeekIdx();
+  const wtasks = state.tasks.filter(t => t.week === w);
+  const wh = wtasks.reduce((s,t) => s + (t.hours || 0), 0);
+
+  /* deadlines pinned to their exact day of this week */
+  const dl = [[],[],[],[],[],[],[]];
+  const pin = (dateStr, label) => {
+    if (weekIdxOf(dateStr) !== w) return;
+    const di = Math.round((pdate(dateStr) - ws) / MS_DAY);
+    if (di >= 0 && di < 7) dl[di].push(label);
+  };
+  for (const a of ASSESS){
+    if (a.milestones) a.milestones.forEach(m => pin(m.date, a.unit.code + ' ' + a.name + ' · ' + m.label));
+    else pin(a.deadline, a.unit.code + ' ' + a.name + ' · ' + a.weight + '%');
+  }
+
+  let h = '<section class="card"><div class="cal-nav mono">'
+    + '<button type="button" data-pw="-1" aria-label="Previous week"' + (w <= 0 ? ' disabled':'') + '>‹</button>'
+    + '<div class="cal-title">' + wkId(w) + (w === cw ? ' · NOW':'')
+    + '<small>' + wkRange(w) + (wh ? ' · Σ ' + r1(wh) + ' h' : '') + '</small></div>'
+    + '<button type="button" data-pw="1" aria-label="Next week"' + (w >= NWEEKS - 1 ? ' disabled':'') + '>›</button>'
+    + '<button type="button" data-pw="0" class="today">now</button></div>';
+
+  h += '<div class="cal-wrap"><div class="cal">';
+  const DW = ['MON','TUE','WED','THU','FRI','SAT','SUN'];
+  const todayT = today0().getTime();
+  for (let d = 0; d < 7; d++){
+    const date = new Date(ws.getTime() + d * MS_DAY);
+    const dts = wtasks.filter(t => t.day === d).sort((a,b) => a.ord - b.ord);
+    const dh = dts.reduce((s,t) => s + (t.hours || 0), 0);
+    h += '<div class="cal-day' + (date.getTime() === todayT ? ' today':'') + '">'
+      + '<div class="cal-dh"><span class="dw">' + DW[d] + '</span><span class="dn mono">' + date.getDate() + '</span>'
+      + (dh ? '<span class="dh-h mono">' + r1(dh) + 'h</span>' : '') + '</div>';
+    dl[d].forEach(s => h += '<div class="dl">◆ ' + esc(s) + '</div>');
+    dts.forEach(t => h += evBlock(t));
+    h += '</div>';
+  }
+  h += '</div></div>';
+
+  const any = wtasks.filter(t => t.day == null).sort((a,b) => a.ord - b.ord);
+  h += '<div class="anytime"><div class="sec-label">Anytime this week</div>';
+  if (any.length) any.forEach(t => h += evBlock(t));
+  else h += '<div class="empty">Nothing waiting — tap any block to move it between days or weeks.</div>';
+  h += '</div></section>';
+
   const rank = {}; queue().forEach((it,i) => rank[it.a.id] = i);
   const backlog = state.tasks.filter(t => t.week == null && !t.done)
     .sort((a,b) => (rank[a.aid] ?? 99) - (rank[b.aid] ?? 99) || a.ord - b.ord);
-
-  let h = '<section class="card"><div class="sec-label">Backlog · unscheduled tasks</div>'
-    + '<div class="hint mono">ordered by priority · assign each task to a week</div>';
+  h += '<section class="card"><div class="sec-label">Backlog · unscheduled tasks</div>'
+    + '<div class="hint mono">ordered by priority · assign each task to a week, then place it on a day</div>';
   if (!backlog.length) h += '<div class="empty">Backlog clear — every open task is scheduled.</div>';
   backlog.forEach(t => {
     const a = A_BY_ID[t.aid];
@@ -552,49 +774,38 @@ function vPlanner(){
       + hoursInput(t) + weekSelect(t) + '</div>';
   });
   h += '</section>';
-
-  const cw = curWeekIdx();
-  for (let i = 0; i < NWEEKS; i++){
-    const wts = state.tasks.filter(t => t.week === i).sort((a,b) => a.ord - b.ord);
-    const hours = wts.reduce((s,t) => s + (t.hours || 0), 0);
-    const due = [];
-    for (const a of ASSESS){
-      if (a.milestones){
-        a.milestones.forEach(m => { if (weekIdxOf(m.date) === i)
-          due.push(a.unit.code + ' ' + a.name + ' · ' + m.label + ' — ' + fmtWD(m.date)); });
-      } else if (weekIdxOf(a.deadline) === i){
-        due.push(a.unit.code + ' ' + a.name + ' (' + a.weight + '%) — ' + fmtWD(a.deadline));
-      }
-    }
-    h += '<section class="card wk' + (i === cw ? ' now':'') + '">'
-      + '<div class="wk-head mono"><span class="wk-id">' + wkId(i) + (i === cw ? ' · NOW':'') + '</span>'
-      + '<span class="wk-range">' + wkRange(i) + '</span>'
-      + '<span class="wk-hours">' + (hours ? 'Σ ' + (Math.round(hours*10)/10) + ' h' : '—') + '</span></div>';
-    due.forEach(s => h += '<div class="wk-due"><span class="dot">◆</span><span>' + esc(s) + '</span></div>');
-    if (wts.length){
-      h += '<div class="wk-body">';
-      wts.forEach(t => {
-        h += '<div class="task' + (t.done ? ' done':'') + '">'
-          + '<label class="tk"><input type="checkbox" data-toggle="' + t.id + '"' + (t.done ? ' checked':'') + '></label>'
-          + '<span style="flex:1;min-width:0"><span class="t-title" data-edit="' + t.id + '">' + esc(t.title) + '</span>'
-          + '<span class="bl-ass">' + A_BY_ID[t.aid].unit.code + ' · ' + esc(A_BY_ID[t.aid].name) + '</span></span>'
-          + hoursInput(t) + weekSelect(t) + '</div>';
-      });
-      h += '</div>';
-    } else if (!due.length){
-      h += '<div class="wk-empty">—</div>';
-    }
-    h += '</section>';
-  }
   return h;
 }
 
 function exportPayload(){
   return JSON.stringify({
     app:'trimester-tracker', version:1,
-    exported:new Date().toISOString(),
+    exported:new Date().toISOString(), updated:state.updated,
     seq:state.seq, tasks:state.tasks
   }, null, 2);
+}
+function syncCard(){
+  let h = '<section class="card"><div class="sec-label">Device sync</div>';
+  if (sync.token){
+    h += '<div class="kv"><b>Status</b><span class="mono' + (sync.status === 'err' ? ' sync-err' : sync.status === 'ok' ? ' sync-ok' : '') + '" id="syncline">' + esc(sync.text()) + '</span></div>'
+      + '<div class="kv"><b>Where</b><span class="mono">' + SY.owner + '/' + SY.repo + ' · branch ' + SY.branch + '</span></div>'
+      + '<div class="btnrow"><button type="button" class="btn" data-act="syncnow">Sync now</button>'
+      + '<button type="button" class="btn danger" data-act="syncoff">Disconnect</button></div>'
+      + '<div class="sync-note">Changes sync automatically a moment after you make them, and when you reopen the app. '
+      + 'If two devices edit at the same time, the <b>latest edit wins</b>. '
+      + 'The sync file lives in your public repo, so task names are technically publicly visible.</div>';
+  } else {
+    h += '<div class="sync-note">Progress is saved per device. To sync phone ↔ PC, the tracker stores its data in your own GitHub repo. One-time setup:<br>'
+      + '1&#41; GitHub → Settings → Developer settings → <b>Fine-grained personal access tokens</b> → Generate new token.<br>'
+      + '2&#41; Repository access: <b>Only select repositories → ' + SY.repo + '</b>.<br>'
+      + '3&#41; Permissions → Repository permissions → <b>Contents: Read and write</b>. Generate and copy it.<br>'
+      + '4&#41; Paste the token below — repeat on each device with the same token.</div>'
+      + '<input class="tok" id="tokin" type="password" placeholder="github_pat_…" autocomplete="off" aria-label="GitHub token">'
+      + '<div class="btnrow"><button type="button" class="btn" data-act="syncon">Connect</button></div>'
+      + '<div class="sync-note">The token never leaves this device except to talk to api.github.com. '
+      + 'Task text is stored in the public repo (branch ' + SY.branch + ') — keep sub-task names non-sensitive.</div>';
+  }
+  return h + '</section>';
 }
 function vData(){
   const done = state.tasks.filter(t => t.done).length;
@@ -603,6 +814,7 @@ function vData(){
     + '<div class="kv"><b>Tasks</b><span class="mono">' + state.tasks.length + ' total · ' + done + ' done</span></div>'
     + '<div class="kv"><b>Autosave</b><span class="mono">on every change</span></div>'
     + '</section>'
+    + syncCard()
     + '<section class="card"><div class="sec-label">Export</div>'
     + '<div class="btnrow"><button type="button" class="btn" data-act="copy">Copy JSON</button>'
     + '<button type="button" class="btn" data-act="download">Download .json</button></div>'
@@ -615,15 +827,20 @@ function vData(){
 }
 
 /* =============== render =============== */
-function render(){
-  const y = window.scrollY;
+function renderHead(){
   document.getElementById('topPct').textContent = Math.round(overall()) + '%';
   document.getElementById('topBar').style.width = Math.min(100, overall()) + '%';
   const cw = curWeekIdx();
   const wkTxt = cw < 0 ? 'term starts ' + fmtD(WEEK0) : cw >= NWEEKS ? 'term ended' : wkId(cw) + '/' + NWEEKS;
   const df = daysUntil(FINAL);
+  const sTag = !sync.token ? '' :
+    ' · sync ' + (sync.status === 'err' ? '✕' : sync.status === 'sync' ? '⟳' : sync.status === 'ok' ? '✓' : '·');
   document.getElementById('topSub').textContent =
-    fmtD(today0()) + ' · ' + wkTxt + ' · ' + (df >= 0 ? df + 'd to thesis' : 'trimester complete');
+    fmtD(today0()) + ' · ' + wkTxt + ' · ' + (df >= 0 ? df + 'd to thesis' : 'trimester complete') + sTag;
+}
+function render(){
+  const y = window.scrollY;
+  renderHead();
   document.querySelectorAll('#tabs button').forEach(b =>
     b.classList.toggle('on', b.dataset.tab === ui.tab));
   const v = document.getElementById('view');
@@ -703,6 +920,20 @@ document.getElementById('view').addEventListener('click', e => {
   if ((el = q('[data-down]'))) { moveTask(el.dataset.down, 1); return; }
   if ((el = q('[data-del]')))  { arm(el, () => removeTask(el.dataset.del), 'sure?'); return; }
   if ((el = q('.t-title[data-edit]'))) { startEdit(el); return; }
+  if ((el = q('[data-pw]'))){
+    const v = +el.dataset.pw;
+    ui.pweek = v === 0
+      ? Math.min(Math.max(curWeekIdx(), 0), NWEEKS - 1)
+      : Math.min(Math.max((ui.pweek ?? 0) + v, 0), NWEEKS - 1);
+    render(); return;
+  }
+  if ((el = q('[data-sel]'))){
+    if (!e.target.closest('.ev-ctl')){
+      ui.selTask = ui.selTask === el.dataset.sel ? null : el.dataset.sel;
+      render();
+    }
+    return;
+  }
   if ((el = q('[data-act]'))){
     const act = el.dataset.act;
     if (act === 'copy'){
@@ -726,10 +957,18 @@ document.getElementById('view').addEventListener('click', e => {
     }
     if (act === 'reset'){
       arm(el, () => {
-        state.tasks = []; state.seq = 1;
-        store.clear(); toast('All data cleared'); render();
+        state.tasks = []; state.seq = 1; state.updated = new Date().toISOString();
+        store.clear(); sync.schedule(); toast('All data cleared'); render();
       }, 'Tap again to erase everything');
     }
+    if (act === 'syncon'){
+      const inp = document.getElementById('tokin');
+      const v = inp && inp.value.trim();
+      if (!v){ toast('Paste a token first'); return; }
+      sync.connect(v); toast('Connecting…');
+    }
+    if (act === 'syncnow'){ sync.pull(true); }
+    if (act === 'syncoff'){ sync.disconnect(); toast('Sync off — data stays on this device'); }
     return;
   }
 });
@@ -748,7 +987,14 @@ document.getElementById('view').addEventListener('change', e => {
     }
   } else if (t.dataset.week !== undefined && t.dataset.week !== ''){
     const tk = byId(t.dataset.week);
-    if (tk){ tk.week = t.value === '' ? null : +t.value; save(); render(); }
+    if (tk){
+      tk.week = t.value === '' ? null : +t.value;
+      if (tk.week == null) tk.day = null;
+      save(); render();
+    }
+  } else if (t.dataset.day !== undefined && t.dataset.day !== ''){
+    const tk = byId(t.dataset.day);
+    if (tk){ tk.day = t.value === '' ? null : +t.value; save(); render(); }
   }
 });
 
@@ -766,19 +1012,22 @@ document.getElementById('view').addEventListener('submit', e => {
 /* =============== init =============== */
 (async function init(){
   store.detect();
+  sync.init();
   if (store.mode === 'memory')
     showBanner('Storage unavailable — progress will not survive closing this page. Export from the Data tab.', true);
   try{
     const raw = await store.load();
     if (raw){
       const d = JSON.parse(raw);
-      if (d && Array.isArray(d.tasks)){
-        state.tasks = d.tasks.filter(t => t && A_BY_ID[t.aid]);
-        state.seq = typeof d.seq === 'number' ? d.seq : state.tasks.length + 1;
-      }
+      if (d && Array.isArray(d.tasks)) state = normalize(d);
     }
   }catch(e){ /* corrupt or empty store: start fresh */ }
   render();
+  if (sync.token) sync.pull(true);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && sync.token) sync.pull();
+  });
+  window.addEventListener('online', () => { if (sync.token) sync.pull(); });
 })();
 </script>
 </body>
