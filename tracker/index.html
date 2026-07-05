@@ -443,7 +443,11 @@ const sync = {
     const sha = (await m.json()).object.sha;
     const c = await this.api('/repos/' + SY.owner + '/' + SY.repo + '/git/refs',
       { method:'POST', body: JSON.stringify({ ref:'refs/heads/' + SY.branch, sha }) });
-    if (!c.ok && c.status !== 422) throw new Error('cannot create branch (HTTP ' + c.status + ')');
+    if (!c.ok && c.status !== 422){
+      if (c.status === 403 || c.status === 404)
+        throw new Error('token has no write access — edit it: repo access must include ' + SY.repo + ', Contents must be Read and write');
+      throw new Error('cannot create branch (HTTP ' + c.status + ')');
+    }
   },
   schedule(){
     if (!this.token) return;
@@ -489,7 +493,11 @@ const sync = {
           res = await this.api(this.cpath(), { method:'PUT', body: JSON.stringify(body) });
         }
       }
-      if (!res.ok) throw new Error('HTTP ' + res.status);
+      if (!res.ok){
+        if (res.status === 403 || res.status === 404)
+          throw new Error('token has no write access — edit it: repo access must include ' + SY.repo + ', Contents must be Read and write');
+        throw new Error('HTTP ' + res.status);
+      }
       const j = await res.json();
       this.sha = j.content && j.content.sha || this.sha;
       this.set('ok');
