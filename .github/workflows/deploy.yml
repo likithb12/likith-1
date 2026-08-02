@@ -110,6 +110,10 @@ jobs:
 
       - name: Mount the app under /networth
         run: |
+          # jekyll-build-pages runs in a Docker container as root, so _site
+          # comes back owned by root and this step — which runs as the runner
+          # user — cannot write into it.
+          sudo chown -R "$(id -u):$(id -g)" _site
           mkdir -p _site/networth
           cp -r app/dist/. _site/networth/
           # Without .nojekyll, Pages drops paths beginning with an underscore.
