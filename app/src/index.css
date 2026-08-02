@@ -1,0 +1,106 @@
+@import 'tailwindcss';
+
+/*
+ * Single dark theme. A personal finance dashboard is read at a glance, often
+ * at night on a phone; one well-tuned theme is better than two half-tuned
+ * ones, and it halves the styling surface across six phases.
+ */
+
+@theme {
+  --color-surface: #0b1120;
+  --color-surface-raised: #131c31;
+  --color-surface-hover: #1b2740;
+  --color-line: #243149;
+  --color-line-strong: #33425f;
+
+  --color-content: #e8edf7;
+  --color-content-muted: #94a3c0;
+  --color-content-faint: #6b7a99;
+
+  --color-brand: #38bdf8;
+  --color-brand-strong: #0ea5e9;
+
+  --color-positive: #34d399;
+  --color-negative: #fb7185;
+  --color-caution: #fbbf24;
+
+  --font-sans: 'Inter var', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', 'Cascadia Mono', 'Roboto Mono', monospace;
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    margin: 0;
+    background-color: var(--color-surface);
+    color: var(--color-content);
+    font-family: var(--font-sans);
+    /* Respect the notch and the home indicator on iOS. */
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Visible focus is a hard requirement, so it is defined once, globally,
+     rather than per component where it can be forgotten. */
+  :focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* Numbers must line up in columns. */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum';
+  }
+
+  /* Chrome and Safari render spinners on number inputs that fight with
+     keyboard-driven bulk entry. */
+  input[type='number']::-webkit-outer-spin-button,
+  input[type='number']::-webkit-inner-spin-button {
+    appearance: none;
+    margin: 0;
+  }
+
+  input[type='number'] {
+    appearance: textfield;
+    -moz-appearance: textfield;
+  }
+
+  ::selection {
+    background: var(--color-brand-strong);
+    color: white;
+  }
+}
+
+@layer utilities {
+  .skip-link {
+    position: absolute;
+    left: -9999px;
+  }
+
+  .skip-link:focus {
+    left: 1rem;
+    top: 1rem;
+    z-index: 100;
+    padding: 0.5rem 1rem;
+    background: var(--color-surface-raised);
+    border: 1px solid var(--color-brand);
+    border-radius: 0.5rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

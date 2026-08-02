@@ -1,1 +1,11 @@
 theme: jekyll-theme-slate
+
+# The app is built by Vite and copied into _site/networth by CI. Jekyll must
+# not try to process its sources, node_modules, or the SQL migrations.
+exclude:
+  - app/
+  - supabase/
+  - node_modules/
+  - README.md
+  - DECISIONS.md
+  - vendor/
