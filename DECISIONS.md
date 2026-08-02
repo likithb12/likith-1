@@ -410,3 +410,42 @@ localStorage alongside the adapter choice.
 
 `useRefreshPrices` only runs from an explicit button press, and skips any
 ticker that already has a price row for today. §5.1 requires both.
+
+---
+
+## Phase 6
+
+### D39. The service worker is hand-written
+
+The whole requirement is "offline read of cached data". A build-time PWA
+plugin would add more dependency surface than the ~120 lines in
+`public/sw.js`, which does three things: network-first navigations falling back
+to a cached shell, cache-first for content-hashed assets, and network-first
+with a cache fallback for Supabase reads.
+
+### D40. Only GET requests are cached, and writes are never queued
+
+A queued write replayed later could silently duplicate a transaction, and the
+dedupe hash would not catch it because the row genuinely is new from the
+client's point of view. Mutations go straight to the network and fail honestly
+when offline; the banner says changes cannot be saved.
+
+### D41. The offline cache holds financial data, and is cleared on sign-out
+
+Making data readable offline means storing it on the device, in Cache Storage.
+That is a real privacy consequence of the feature, so: auth endpoints are never
+cached, the cache is dropped when the worker updates, and signing out posts
+`clear-api-cache` to remove it. Stated in Settings and in the README rather
+than left for someone to discover.
+
+### D42. The dashboard loads without the charting library
+
+Recharts is ~113 kB gzipped — more than everything else on the dashboard put
+together. It is loaded lazily, so the headline number, the change indicators
+and the freshness panel paint first, which is what §8's two-second target is
+actually about. This required moving `rangeStart` into its own module: a single
+static import from the chart module would have cancelled the split, and Rollup
+warned about exactly that.
+
+Critical path is now ~176 kB gzipped (app, React, Supabase, TanStack Query)
+with charts, and every route other than the dashboard, deferred.

@@ -1,10 +1,22 @@
-import { useMemo, useState } from 'react'
+import { Suspense, lazy, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Badge, Button, Card, CardHeader, PageHeader, cx } from '../ui/primitives'
-import { EmptyState, ErrorState, SkeletonRows, WarningBanner } from '../ui/feedback'
+import { EmptyState, ErrorState, LoadingState, SkeletonRows, WarningBanner } from '../ui/feedback'
 import { FreshnessBadge } from '../ui/Freshness'
-import { NetWorthTrend, rangeStart, type TrendRange } from '../components/NetWorthTrend'
-import { CompositionChart } from '../components/CompositionChart'
+import { rangeStart, type TrendRange } from '../components/trendRange'
+
+/*
+ * The charting library is ~110 kB gzipped — more than everything else on this
+ * page put together. Loading it lazily lets the headline number, the change
+ * indicators and the freshness panel paint immediately, which is what §8's
+ * two-second target is actually about.
+ */
+const NetWorthTrend = lazy(() =>
+  import('../components/NetWorthTrend').then((m) => ({ default: m.NetWorthTrend })),
+)
+const CompositionChart = lazy(() =>
+  import('../components/CompositionChart').then((m) => ({ default: m.CompositionChart })),
+)
 import { useAccounts } from '../data/accounts'
 import { useBalanceSnapshots } from '../data/balances'
 import { useTransactions } from '../data/transactions'
@@ -342,12 +354,14 @@ export function Dashboard() {
                 </Button>
               }
             />
-            <NetWorthTrend
-              snapshots={netWorthSnapshots.data ?? []}
-              baseCurrency={baseCurrency}
-              range={range}
-              onRangeChange={setRange}
-            />
+            <Suspense fallback={<LoadingState label="Loading chart…" />}>
+              <NetWorthTrend
+                snapshots={netWorthSnapshots.data ?? []}
+                baseCurrency={baseCurrency}
+                range={range}
+                onRangeChange={setRange}
+              />
+            </Suspense>
           </Card>
 
           <Card>
@@ -355,7 +369,9 @@ export function Dashboard() {
               title="What it is made of"
               subtitle="Assets by type above the line, what you owe below it."
             />
-            <CompositionChart engine={engine} dates={compositionDates} baseCurrency={baseCurrency} />
+            <Suspense fallback={<LoadingState label="Loading chart…" />}>
+              <CompositionChart engine={engine} dates={compositionDates} baseCurrency={baseCurrency} />
+            </Suspense>
           </Card>
 
           {/*

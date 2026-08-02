@@ -7,6 +7,7 @@ import { AuthProvider } from './auth/AuthProvider'
 import { ToastProvider } from './ui/toast'
 import { ErrorBoundary } from './ui/feedback'
 import { isBackendUnreachable } from './lib/supabase'
+import { initInstallPrompt, registerServiceWorker } from './pwa'
 import './index.css'
 
 /*
@@ -29,6 +30,9 @@ const queryClient = new QueryClient({
     },
   },
 })
+
+initInstallPrompt()
+registerServiceWorker()
 
 const container = document.getElementById('root')
 if (!container) throw new Error('Root element missing from index.html')

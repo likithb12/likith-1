@@ -13,6 +13,19 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: true,
+    rollupOptions: {
+      output: {
+        // Split the big, stable dependencies into their own chunks so a code
+        // change does not invalidate them, and so the charting library is not
+        // on the critical path of the first paint.
+        manualChunks: {
+          react: ['react', 'react-dom', 'react-router-dom'],
+          charts: ['recharts'],
+          supabase: ['@supabase/supabase-js'],
+          query: ['@tanstack/react-query'],
+        },
+      },
+    },
   },
   test: {
     environment: 'node',

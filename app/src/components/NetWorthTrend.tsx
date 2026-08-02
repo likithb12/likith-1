@@ -13,31 +13,15 @@ import { CHART } from './chartTheme'
 import { Button, cx } from '../ui/primitives'
 import { EmptyState } from '../ui/feedback'
 import { formatMoney, formatMoneyShort } from '../lib/money'
-import { addMonths, formatDate, formatDateShort, todayISO, type ISODate } from '../lib/dates'
+import { formatDate, formatDateShort, type ISODate } from '../lib/dates'
+import { TREND_RANGES, rangeStart, type TrendRange } from './trendRange'
 import type { NetWorthSnapshot } from '../types'
 
-export type TrendRange = '3M' | '6M' | '1Y' | 'All'
-
-const RANGES: TrendRange[] = ['3M', '6M', '1Y', 'All']
+export type { TrendRange }
 
 export interface TrendPoint {
   as_at: ISODate
   netWorth: number
-}
-
-/** Earliest date included for a range, or null for "All". */
-export function rangeStart(range: TrendRange, today: ISODate = todayISO()): ISODate | null {
-  switch (range) {
-    case '3M':
-      return addMonths(today, -3)
-    case '6M':
-      return addMonths(today, -6)
-    case '1Y':
-      return addMonths(today, -12)
-    case 'All':
-    default:
-      return null
-  }
 }
 
 /**
@@ -67,7 +51,7 @@ export function NetWorthTrend({
 
   const controls = (
     <div className="flex flex-wrap items-center gap-1" role="group" aria-label="Chart date range">
-      {RANGES.map((option) => (
+      {TREND_RANGES.map((option) => (
         <button
           key={option}
           type="button"

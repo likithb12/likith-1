@@ -47,7 +47,7 @@ reset flow.
 | 3 | Obligations | ✅ Done |
 | 4 | Income | ✅ Done |
 | 5 | Holdings, prices, FX | ✅ Done |
-| 6 | PWA, offline, polish | Not started |
+| 6 | PWA, offline, polish | ✅ Done |
 
 > **The app cannot run until a Supabase project exists and the two environment
 > variables below are set.** Creating that project requires an account login and
@@ -252,6 +252,26 @@ included in the JSON export.
 Prices are cached in `price_points`, fetched only when you press the button,
 and at most once per ticker per day. A failed fetch is a non-blocking warning
 and the last known price is used, flagged as stale.
+
+---
+
+## Offline and installing
+
+The app is installable to a phone home screen and readable offline.
+
+A service worker caches the app shell, its assets, and the data you have
+already loaded. Reloading with no connection still shows your last known
+figures, with a banner saying so — an old net worth figure presented as current
+would be worse than no figure.
+
+**Writes are never queued.** Replaying a queued write later could silently
+duplicate a transaction, so changes simply fail while offline and the banner
+says so.
+
+**The offline cache holds your financial data on that device**, in the
+browser's Cache Storage. Auth tokens are never cached, the cache is dropped
+whenever the service worker updates, and signing out clears it. On a shared
+device, sign out.
 
 ---
 

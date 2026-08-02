@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Button, Card, CardHeader, Checkbox, Field, Input, PageHeader, Select } from '../ui/primitives'
 import { ErrorState } from '../ui/feedback'
 import { useToast } from '../ui/toast'
@@ -15,6 +15,7 @@ import { COMMON_CURRENCIES } from '../lib/fx'
 import { describeError, supabaseUrl } from '../lib/supabase'
 import { useAuth } from '../auth/AuthProvider'
 import { PricesAndFx } from './PricesAndFx'
+import { isInstallAvailable, isStandalone, onInstallAvailabilityChange, promptInstall } from '../pwa'
 
 export function Settings() {
   const profile = useProfile()
@@ -25,9 +26,12 @@ export function Settings() {
   const { user } = useAuth()
   const { notify } = useToast()
 
+  const [installAvailable, setInstallAvailable] = useState(() => isInstallAvailable())
   const [pendingImport, setPendingImport] = useState<ExportFile | null>(null)
   const [replaceExisting, setReplaceExisting] = useState(false)
   const fileInput = useRef<HTMLInputElement>(null)
+
+  useEffect(() => onInstallAvailabilityChange(setInstallAvailable), [])
 
   if (profile.isError) {
     return (
@@ -251,6 +255,34 @@ export function Settings() {
       </Card>
 
       <Card>
+        <CardHeader
+          title="Install on this device"
+          subtitle="Adds it to your home screen and lets it open without browser chrome."
+        />
+        <div className="flex flex-wrap items-center justify-between gap-3 p-4">
+          <p className="min-w-0 text-sm text-content-muted">
+            {isStandalone()
+              ? 'Already installed — you are running it from the home screen.'
+              : installAvailable
+                ? 'Your browser can install this app.'
+                : 'On iPhone or iPad, use Share → Add to Home Screen. On desktop Chrome, look for the install icon in the address bar.'}
+          </p>
+          {installAvailable && !isStandalone() && (
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={async () => {
+                const outcome = await promptInstall()
+                if (outcome === 'accepted') notify('Installed.', { tone: 'success' })
+              }}
+            >
+              Install
+            </Button>
+          )}
+        </div>
+      </Card>
+
+      <Card>
         <CardHeader title="Where your data lives" />
         <div className="space-y-3 p-4 text-sm text-content-muted">
           <dl className="space-y-1.5">
@@ -265,6 +297,11 @@ export function Settings() {
           </dl>
 
           <p className="border-t border-line pt-3">
+            For offline reading, this device keeps a copy of the data it has already loaded in the
+            browser's cache. Signing out clears it.
+          </p>
+
+          <p>
             Row-level security isolates your rows from every other user. It does{' '}
             <strong className="text-content">not</strong> hide your data from Supabase or AWS, who can
             read the database in plaintext. Amounts are not encrypted. This trade-off is described in

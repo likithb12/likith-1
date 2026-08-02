@@ -3,6 +3,7 @@ import { useAuth } from '../auth/AuthProvider'
 import { Icon, type IconName } from './Icon'
 import { Button, cx } from './primitives'
 import { ErrorBoundary } from './feedback'
+import { OfflineBanner } from './OfflineBanner'
 
 interface NavItem {
   to: string
@@ -81,6 +82,7 @@ export function Layout() {
       </header>
 
       <main id="main" className="min-w-0 flex-1 pb-20 lg:pb-0">
+        <OfflineBanner />
         <div className="mx-auto max-w-5xl px-4 py-5 sm:px-6 sm:py-8">
           <ErrorBoundary>
             <Outlet />

@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { Session, User } from '@supabase/supabase-js'
 import { authRedirectUrl, isSupabaseConfigured, supabase } from '../lib/supabase'
+import { clearApiCache } from '../pwa'
 
 export type AuthStatus = 'loading' | 'signed_in' | 'signed_out' | 'unconfigured'
 
@@ -63,6 +64,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = useCallback(async () => {
     if (!supabase) return
     await supabase.auth.signOut()
+    // The service worker caches API reads for offline use; that cache holds
+    // financial data and must not outlive the session on a shared device.
+    clearApiCache()
     setSession(null)
     setStatus('signed_out')
   }, [])
