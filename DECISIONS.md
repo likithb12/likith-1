@@ -306,3 +306,32 @@ Duplicate detection is scoped per account, both because the dedupe hash
 includes `account_id` and because it is what makes the "existing hashes" query
 bounded. An import with no account selected could not be de-duplicated
 reliably, so the wizard requires one.
+
+---
+
+## Phase 3
+
+### D30. `amount_settled` is recalculated from the payment rows, never incremented
+
+Recording or deleting a payment recomputes the total from `obligation_payments`
+and derives the status from it. Incrementing a running total would let a
+deleted or corrected payment leave `amount_settled` permanently out of step
+with the payments that produced it, and nothing would ever notice.
+
+### D31. Settling a recurring obligation creates the next occurrence immediately
+
+§4.4 says recurring obligations generate the next instance on settlement. That
+happens inside the same mutation that records the final payment, so a monthly
+bill cannot silently disappear the moment it is paid. The new instance copies
+the amount, counterparty, link and recurrence, with `due_date` advanced and
+nothing settled.
+
+### D32. The obligations list totals everything; only net worth applies the guard
+
+The "I owe" total on the obligations screen includes obligations linked to an
+account, because the question that screen answers is "what do I owe, to whom,
+and when" — and the debt is real regardless of where it is tracked. The
+double-counting guard applies to the **net worth** calculation, which is the
+only place counting it twice would produce a wrong number. The screen states
+which obligations are excluded from net worth and why, rather than quietly
+showing two different totals with no explanation.

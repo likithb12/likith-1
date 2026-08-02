@@ -14,7 +14,7 @@ import { monthEnd, monthStart } from '../lib/dates'
 import { useNetWorthEngine, useNetWorthSnapshots, useRecomputeNetWorth } from '../data/netWorth'
 import { useBaseCurrency } from '../data/profile'
 import { formatMoney, formatPercent, formatSigned, percentChange } from '../lib/money'
-import { addMonths, formatMonth, todayISO, type ISODate } from '../lib/dates'
+import { addDays, addMonths, formatDate, formatMonth, relativeDays, todayISO, type ISODate } from '../lib/dates'
 import { STALE_AFTER_DAYS } from '../types'
 import { useToast } from '../ui/toast'
 import { describeError } from '../lib/supabase'
@@ -44,6 +44,22 @@ export function Dashboard() {
     () => monthSummary(monthTransactions.data ?? [], budgets.data ?? [], today),
     [monthTransactions.data, budgets.data, today],
   )
+
+  /** Obligations falling due inside the next fortnight, overdue ones first. */
+  const upcoming = useMemo(() => {
+    const horizon = addDays(today, 14)
+    return engine
+      .valueObligations(today)
+      .filter(
+        (entry) =>
+          entry.outstandingNative.gt(0) &&
+          entry.obligation.status !== 'settled' &&
+          entry.obligation.status !== 'written_off' &&
+          entry.obligation.due_date !== null &&
+          entry.obligation.due_date <= horizon,
+      )
+      .sort((a, b) => (a.obligation.due_date! < b.obligation.due_date! ? -1 : 1))
+  }, [engine, today])
 
   const changes = useMemo(
     () =>
@@ -249,6 +265,58 @@ export function Dashboard() {
               </div>
             </div>
           </Card>
+
+          {upcoming.length > 0 && (
+            <Card>
+              <CardHeader
+                title="Due in the next 14 days"
+                subtitle="Both directions, soonest first."
+                action={
+                  <Link
+                    to="/obligations"
+                    className="text-xs font-medium text-brand underline underline-offset-2"
+                  >
+                    All obligations
+                  </Link>
+                }
+              />
+              <ul className="divide-y divide-line">
+                {upcoming.map((entry) => {
+                  const isPayable = entry.obligation.direction === 'payable'
+                  const overdue = Boolean(entry.obligation.due_date && entry.obligation.due_date < today)
+                  return (
+                    <li
+                      key={entry.obligation.id}
+                      className={cx(
+                        'flex flex-wrap items-center justify-between gap-2 px-4 py-2.5',
+                        overdue && 'bg-negative/5',
+                      )}
+                    >
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <span className="truncate text-sm text-content">
+                            {entry.obligation.counterparty}
+                          </span>
+                          <Badge tone={isPayable ? 'negative' : 'positive'}>
+                            {isPayable ? 'I owe' : 'Owed to me'}
+                          </Badge>
+                          {overdue && <Badge tone="negative">Overdue</Badge>}
+                        </div>
+                        <p className="text-xs text-content-faint">
+                          {entry.obligation.due_date
+                            ? `${formatDate(entry.obligation.due_date)} · ${relativeDays(entry.obligation.due_date, today)}`
+                            : 'No due date'}
+                        </p>
+                      </div>
+                      <span className="tabular text-sm font-semibold text-content">
+                        {formatMoney(entry.outstandingNative, entry.obligation.currency)}
+                      </span>
+                    </li>
+                  )
+                })}
+              </ul>
+            </Card>
+          )}
 
           <Card>
             <CardHeader

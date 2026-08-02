@@ -44,7 +44,7 @@ reset flow.
 | 0 | Scaffold, schema, RLS, auth, routing, CI | ✅ Done |
 | 1 | Accounts, balance snapshots, net worth, dashboard, JSON export | ✅ Done |
 | 2 | Categories, transactions, CSV import, budgets | ✅ Done |
-| 3 | Obligations | Not started |
+| 3 | Obligations | ✅ Done |
 | 4 | Income | Not started |
 | 5 | Holdings, prices, FX | Not started |
 | 6 | PWA, offline, polish | Not started |

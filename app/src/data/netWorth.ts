@@ -12,7 +12,8 @@ import { todayISO, type ISODate } from '../lib/dates'
 import { useAccounts } from './accounts'
 import { useBalanceSnapshots } from './balances'
 import { useBaseCurrency } from './profile'
-import type { BalanceSnapshot, NetWorthSnapshot } from '../types'
+import { useObligations } from './obligations'
+import type { BalanceSnapshot, NetWorthSnapshot, Obligation } from '../types'
 
 /**
  * The materialised trend table.
@@ -48,9 +49,9 @@ export function useNetWorthSnapshots() {
 /**
  * Everything the calculation reads.
  *
- * Later phases extend this: holdings and price_points in phase 5, fx_rates in
- * phase 5, obligations in phase 3. The engine already accepts them, so each
- * phase adds a fetch here and the dashboard picks it up with no other change.
+ * Phase 5 adds holdings, price_points and fx_rates here. The engine already
+ * accepts them, so that phase adds a fetch and the dashboard picks it up with
+ * no other change.
  */
 async function fetchEngineInputs(supabase: SupabaseClient) {
   const accounts = await fetchAllPages((from, to) =>
@@ -64,13 +65,22 @@ async function fetchEngineInputs(supabase: SupabaseClient) {
     ['balance'],
   ) as unknown as BalanceSnapshot[]
 
-  return { accounts: accounts as never[], snapshots }
+  const obligationRows = await fetchAllPages((from, to) =>
+    supabase.from('obligations').select('*').range(from, to),
+  )
+  const obligations = normaliseRows(obligationRows as unknown as Record<string, unknown>[], [
+    'amount_total',
+    'amount_settled',
+  ]) as unknown as Obligation[]
+
+  return { accounts: accounts as never[], snapshots, obligations }
 }
 
 /** Engine built from the currently cached queries, for rendering. */
 export function useNetWorthEngine(): { engine: NetWorthEngine; isLoading: boolean } {
   const accounts = useAccounts()
   const snapshots = useBalanceSnapshots()
+  const obligations = useObligations()
   const baseCurrency = useBaseCurrency()
 
   const engine = useMemo(
@@ -79,9 +89,10 @@ export function useNetWorthEngine(): { engine: NetWorthEngine; isLoading: boolea
         baseCurrency,
         accounts: accounts.data ?? [],
         balanceSnapshots: snapshots.data ?? [],
+        obligations: obligations.data ?? [],
         fx: new FxTable([]),
       }),
-    [accounts.data, snapshots.data, baseCurrency],
+    [accounts.data, snapshots.data, obligations.data, baseCurrency],
   )
 
   return { engine, isLoading: accounts.isLoading || snapshots.isLoading }
@@ -102,12 +113,13 @@ export function useRecomputeNetWorth() {
   return useMutation({
     mutationFn: async (): Promise<number> => {
       const supabase = requireSupabase()
-      const { accounts, snapshots } = await fetchEngineInputs(supabase)
+      const { accounts, snapshots, obligations } = await fetchEngineInputs(supabase)
 
       const engine = new NetWorthEngine({
         baseCurrency,
         accounts,
         balanceSnapshots: snapshots,
+        obligations,
         fx: new FxTable([]),
       })
 
