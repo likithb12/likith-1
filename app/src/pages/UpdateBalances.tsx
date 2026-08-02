@@ -104,6 +104,7 @@ export function UpdateBalances() {
     const next: Record<string, string> = {}
     for (const account of active) {
       const valuation = valuationById.get(account.id)
+      if (valuation?.derivedFromHoldings) continue
       if (valuation?.hasData) next[account.id] = valuation.balanceNative.toFixed(2)
     }
     setDrafts(next)
@@ -114,6 +115,8 @@ export function UpdateBalances() {
     const inputs: { account_id: string; as_at: string; balance: string; currency: string }[] = []
 
     for (const account of active) {
+      // A brokerage account valued from holdings has no balance to enter.
+      if (valuationById.get(account.id)?.derivedFromHoldings) continue
       const raw = drafts[account.id]
       if (raw === undefined || raw.trim() === '') continue
 
@@ -263,6 +266,11 @@ export function UpdateBalances() {
                       </div>
                     </div>
 
+                    {valuation?.derivedFromHoldings ? (
+                      <div className="w-full text-xs text-content-faint sm:w-40 sm:text-right">
+                        Valued from holdings
+                      </div>
+                    ) : (
                     <div className="w-full sm:w-40">
                       <label htmlFor={`balance-${account.id}`} className="sr-only">
                         {isLiability ? 'Amount owed' : 'Balance'} for {account.name} in {account.currency}
@@ -290,6 +298,7 @@ export function UpdateBalances() {
                         </p>
                       )}
                     </div>
+                    )}
                   </li>
                 )
               })}

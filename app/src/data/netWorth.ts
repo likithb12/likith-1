@@ -13,7 +13,8 @@ import { useAccounts } from './accounts'
 import { useBalanceSnapshots } from './balances'
 import { useBaseCurrency } from './profile'
 import { useObligations } from './obligations'
-import type { BalanceSnapshot, NetWorthSnapshot, Obligation } from '../types'
+import { useFxRates, useHoldings, usePricePoints } from './investments'
+import type { BalanceSnapshot, FxRate, Holding, NetWorthSnapshot, Obligation, PricePoint } from '../types'
 
 /**
  * The materialised trend table.
@@ -46,13 +47,7 @@ export function useNetWorthSnapshots() {
   })
 }
 
-/**
- * Everything the calculation reads.
- *
- * Phase 5 adds holdings, price_points and fx_rates here. The engine already
- * accepts them, so that phase adds a fetch and the dashboard picks it up with
- * no other change.
- */
+/** Everything the calculation reads. */
 async function fetchEngineInputs(supabase: SupabaseClient) {
   const accounts = await fetchAllPages((from, to) =>
     supabase.from('accounts').select('*').order('display_order').range(from, to),
@@ -73,7 +68,29 @@ async function fetchEngineInputs(supabase: SupabaseClient) {
     'amount_settled',
   ]) as unknown as Obligation[]
 
-  return { accounts: accounts as never[], snapshots, obligations }
+  const holdingRows = await fetchAllPages((from, to) =>
+    supabase.from('holdings').select('*').range(from, to),
+  )
+  const holdings = normaliseRows(holdingRows as unknown as Record<string, unknown>[], [
+    'units',
+    'avg_cost_per_unit',
+  ]) as unknown as Holding[]
+
+  const priceRows = await fetchAllPages((from, to) =>
+    supabase.from('price_points').select('*').order('as_at').range(from, to),
+  )
+  const pricePoints = normaliseRows(priceRows as unknown as Record<string, unknown>[], [
+    'price',
+  ]) as unknown as PricePoint[]
+
+  const fxRows = await fetchAllPages((from, to) =>
+    supabase.from('fx_rates').select('*').order('as_at').range(from, to),
+  )
+  const fxRates = normaliseRows(fxRows as unknown as Record<string, unknown>[], [
+    'rate',
+  ]) as unknown as FxRate[]
+
+  return { accounts: accounts as never[], snapshots, obligations, holdings, pricePoints, fxRates }
 }
 
 /** Engine built from the currently cached queries, for rendering. */
@@ -81,6 +98,9 @@ export function useNetWorthEngine(): { engine: NetWorthEngine; isLoading: boolea
   const accounts = useAccounts()
   const snapshots = useBalanceSnapshots()
   const obligations = useObligations()
+  const holdings = useHoldings()
+  const pricePoints = usePricePoints()
+  const fxRates = useFxRates()
   const baseCurrency = useBaseCurrency()
 
   const engine = useMemo(
@@ -90,9 +110,19 @@ export function useNetWorthEngine(): { engine: NetWorthEngine; isLoading: boolea
         accounts: accounts.data ?? [],
         balanceSnapshots: snapshots.data ?? [],
         obligations: obligations.data ?? [],
-        fx: new FxTable([]),
+        holdings: holdings.data ?? [],
+        pricePoints: pricePoints.data ?? [],
+        fx: new FxTable(fxRates.data ?? []),
       }),
-    [accounts.data, snapshots.data, obligations.data, baseCurrency],
+    [
+      accounts.data,
+      snapshots.data,
+      obligations.data,
+      holdings.data,
+      pricePoints.data,
+      fxRates.data,
+      baseCurrency,
+    ],
   )
 
   return { engine, isLoading: accounts.isLoading || snapshots.isLoading }
@@ -113,14 +143,17 @@ export function useRecomputeNetWorth() {
   return useMutation({
     mutationFn: async (): Promise<number> => {
       const supabase = requireSupabase()
-      const { accounts, snapshots, obligations } = await fetchEngineInputs(supabase)
+      const { accounts, snapshots, obligations, holdings, pricePoints, fxRates } =
+        await fetchEngineInputs(supabase)
 
       const engine = new NetWorthEngine({
         baseCurrency,
         accounts,
         balanceSnapshots: snapshots,
         obligations,
-        fx: new FxTable([]),
+        holdings,
+        pricePoints,
+        fx: new FxTable(fxRates),
       })
 
       const today = todayISO()

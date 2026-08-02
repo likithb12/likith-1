@@ -46,7 +46,7 @@ reset flow.
 | 2 | Categories, transactions, CSV import, budgets | ✅ Done |
 | 3 | Obligations | ✅ Done |
 | 4 | Income | ✅ Done |
-| 5 | Holdings, prices, FX | Not started |
+| 5 | Holdings, prices, FX | ✅ Done |
 | 6 | PWA, offline, polish | Not started |
 
 > **The app cannot run until a Supabase project exists and the two environment
@@ -223,6 +223,35 @@ Options, in order of how well they fit the use case:
    not leave it paused for months.
 
 Export your data periodically regardless: **Settings → Export to JSON**.
+
+---
+
+## Prices and exchange rates
+
+Both are behind an adapter with a manual fallback, and **manual entry is the
+default**. The app is fully functional with every external integration
+disabled.
+
+An Alpha Vantage adapter is included but ships **disabled and unverified**.
+The scope asked for the licence and availability to be checked before writing
+code; that check could not be completed during the build, because the build
+environment blocks outbound requests to third-party hosts. Before enabling it,
+confirm two things:
+
+1. **CORS.** This app is a static site with no backend, so your browser calls
+   the API directly. The provider must send a permissive
+   `Access-Control-Allow-Origin` header or the request is blocked — it will
+   appear as "Failed to fetch". Working around this needs a server, which the
+   hosting decision rules out.
+2. **Coverage and licence.** ASX symbol coverage and the free tier's rate
+   limits and permitted use are worth confirming for your case.
+
+Your API key is stored in your browser, never in the database, and is not
+included in the JSON export.
+
+Prices are cached in `price_points`, fetched only when you press the button,
+and at most once per ticker per day. A failed fetch is a non-blocking warning
+and the last known price is used, flagged as stale.
 
 ---
 

@@ -14,6 +14,7 @@ import { useRecomputeNetWorth } from '../data/netWorth'
 import { COMMON_CURRENCIES } from '../lib/fx'
 import { describeError, supabaseUrl } from '../lib/supabase'
 import { useAuth } from '../auth/AuthProvider'
+import { PricesAndFx } from './PricesAndFx'
 
 export function Settings() {
   const profile = useProfile()
@@ -151,6 +152,8 @@ export function Settings() {
           </Field>
         </div>
       </Card>
+
+      <PricesAndFx />
 
       <Card>
         <CardHeader

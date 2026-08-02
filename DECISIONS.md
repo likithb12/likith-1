@@ -361,3 +361,52 @@ rate is null and the UI shows "—" with an explanation.
 
 Otherwise `next_expected_date` goes stale the first time you are paid and the
 "next expected" column becomes actively misleading.
+
+---
+
+## Phase 5
+
+### D36. The price API adapter could not be verified, and ships disabled
+
+**§10 assigned "verify current availability and licence terms before writing
+code" to this build. That verification could not be completed, and this is the
+one open item that is not closed.**
+
+The build environment's network policy blocks outbound requests to third-party
+hosts, so neither Alpha Vantage's ASX symbol coverage nor — more importantly —
+its CORS behaviour could be tested. Research confirms the spec's premise that
+no free, officially supported ASX price API exists: the unofficial Yahoo
+Finance endpoints are undocumented, break without notice and sit in a terms-of-
+service grey area, which rules them out.
+
+There is also a constraint the scope does not mention. Because §2 fixes a
+static frontend with no backend, **the browser calls the price API directly**,
+so any adapter requires the provider to send a permissive
+`Access-Control-Allow-Origin` header. A provider that works perfectly from
+curl can be unusable here. Working around it would mean running a proxy
+server, which contradicts the hosting decision.
+
+So:
+
+- The **manual adapter is the default** and always works, as §5.1 requires.
+- An **Alpha Vantage adapter is implemented behind the same interface**, but is
+  opt-in, requires the user's own API key, is labelled "unverified" in the UI,
+  and states plainly what has not been confirmed and how to tell whether CORS
+  is the problem.
+- The application is fully functional with both integrations disabled.
+
+What Likith needs to check before relying on it: that the provider allows
+cross-origin browser requests, that ASX symbols are covered, and that the free
+tier's licence permits this use.
+
+### D37. The API key is stored in the browser, not the database
+
+It is the user's credential with a third party, it is not needed on another
+device in order to read their own data, and keeping it out of Postgres keeps it
+out of the JSON export and out of anything the platform can read. It lives in
+localStorage alongside the adapter choice.
+
+### D38. Prices are fetched at most once per ticker per day, and never on render
+
+`useRefreshPrices` only runs from an explicit button press, and skips any
+ticker that already has a price row for today. §5.1 requires both.

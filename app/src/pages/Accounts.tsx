@@ -6,6 +6,7 @@ import { ConfirmDialog } from '../ui/Modal'
 import { Icon } from '../ui/Icon'
 import { Sparkline } from '../ui/Sparkline'
 import { FreshnessBadge } from '../ui/Freshness'
+import { HoldingsPanel } from './HoldingsPanel'
 import { useToast } from '../ui/toast'
 import { AccountForm } from './AccountForm'
 import {
@@ -329,6 +330,7 @@ function AccountGroup({
               {isOpen && (
                 <AccountDetail
                   account={account}
+                  valuation={valuation}
                   history={history}
                   onEdit={() => onEdit(account)}
                   onDelete={() => onDelete(account)}
@@ -345,12 +347,14 @@ function AccountGroup({
 
 function AccountDetail({
   account,
+  valuation,
   history,
   onEdit,
   onDelete,
   onCloseAccount,
 }: {
   account: Account
+  valuation?: AccountValuation
   history: BalanceSnapshot[]
   onEdit: () => void
   onDelete: () => void
@@ -378,6 +382,12 @@ function AccountDetail({
           Delete
         </Button>
       </div>
+
+      {account.type === 'brokerage' && (
+        <div className="mb-4 border-b border-line pb-4">
+          <HoldingsPanel account={account} valuation={valuation} />
+        </div>
+      )}
 
       {ordered.length === 0 ? (
         <p className="py-2 text-xs text-content-faint">
