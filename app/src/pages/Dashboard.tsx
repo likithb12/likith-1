@@ -7,10 +7,14 @@ import { NetWorthTrend, rangeStart, type TrendRange } from '../components/NetWor
 import { CompositionChart } from '../components/CompositionChart'
 import { useAccounts } from '../data/accounts'
 import { useBalanceSnapshots } from '../data/balances'
+import { useTransactions } from '../data/transactions'
+import { useBudgets } from '../data/budgets'
+import { monthSummary } from '../lib/spending'
+import { monthEnd, monthStart } from '../lib/dates'
 import { useNetWorthEngine, useNetWorthSnapshots, useRecomputeNetWorth } from '../data/netWorth'
 import { useBaseCurrency } from '../data/profile'
 import { formatMoney, formatPercent, formatSigned, percentChange } from '../lib/money'
-import { addMonths, todayISO, type ISODate } from '../lib/dates'
+import { addMonths, formatMonth, todayISO, type ISODate } from '../lib/dates'
 import { STALE_AFTER_DAYS } from '../types'
 import { useToast } from '../ui/toast'
 import { describeError } from '../lib/supabase'
@@ -27,7 +31,19 @@ export function Dashboard() {
   const [range, setRange] = useState<TrendRange>('1Y')
 
   const today = todayISO()
+  const thisMonth = monthStart(today)
+
+  // Only this month's rows — the dashboard must not pull the full transaction
+  // history just to total one month.
+  const monthTransactions = useTransactions({ from: thisMonth, to: monthEnd(today) })
+  const budgets = useBudgets()
+
   const current = useMemo(() => engine.computeAt(today), [engine, today])
+
+  const month = useMemo(
+    () => monthSummary(monthTransactions.data ?? [], budgets.data ?? [], today),
+    [monthTransactions.data, budgets.data, today],
+  )
 
   const changes = useMemo(
     () =>
@@ -158,6 +174,79 @@ export function Dashboard() {
                   </div>
                 ))}
               </dl>
+            </div>
+          </Card>
+
+          <Card>
+            <CardHeader
+              title={`This month — ${formatMonth(thisMonth)}`}
+              subtitle="Transfers between your own accounts are excluded."
+              action={
+                <Link to="/expenses" className="text-xs font-medium text-brand underline underline-offset-2">
+                  Details
+                </Link>
+              }
+            />
+            <div className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-3">
+              <div className="rounded-lg border border-line bg-surface px-3 py-2.5">
+                <p className="text-xs text-content-muted">Spent</p>
+                <p className="tabular mt-0.5 text-lg font-semibold text-content">
+                  {formatMoney(month.spend, baseCurrency)}
+                </p>
+                {month.hasBudget ? (
+                  <>
+                    <div
+                      className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-surface-hover"
+                      role="progressbar"
+                      aria-valuenow={Math.round(
+                        month.budgeted.isZero() ? 0 : month.spend.div(month.budgeted).times(100).toNumber(),
+                      )}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-label="Budget used this month"
+                    >
+                      <div
+                        className={cx(
+                          'h-full rounded-full',
+                          month.spend.gt(month.budgeted) ? 'bg-negative' : 'bg-positive',
+                        )}
+                        style={{
+                          width: `${Math.min(
+                            100,
+                            month.budgeted.isZero()
+                              ? 0
+                              : month.spend.div(month.budgeted).times(100).toNumber(),
+                          )}%`,
+                        }}
+                      />
+                    </div>
+                    <p className="mt-1 text-xs text-content-faint">
+                      of {formatMoney(month.budgeted, baseCurrency)} budgeted
+                    </p>
+                  </>
+                ) : (
+                  <p className="mt-1 text-xs text-content-faint">No budget set</p>
+                )}
+              </div>
+
+              <div className="rounded-lg border border-line bg-surface px-3 py-2.5">
+                <p className="text-xs text-content-muted">Income received</p>
+                <p className="tabular mt-0.5 text-lg font-semibold text-positive">
+                  {formatMoney(month.income, baseCurrency)}
+                </p>
+              </div>
+
+              <div className="rounded-lg border border-line bg-surface px-3 py-2.5">
+                <p className="text-xs text-content-muted">Net this month</p>
+                <p
+                  className={cx(
+                    'tabular mt-0.5 text-lg font-semibold',
+                    month.income.minus(month.spend).isNegative() ? 'text-negative' : 'text-content',
+                  )}
+                >
+                  {formatSigned(month.income.minus(month.spend), baseCurrency)}
+                </p>
+              </div>
             </div>
           </Card>
 

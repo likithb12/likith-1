@@ -256,3 +256,53 @@ and every foreign key is remapped to match. That makes a *merge* import create
 duplicate accounts, which is rarely what anyone wants, so the import screen
 offers "replace all my existing data first" and states plainly what each choice
 does rather than guessing.
+
+---
+
+## Phase 2
+
+### D23. The CSV parser is hand-written
+
+The requirement is one RFC 4180 parser plus a date reader. A dependency for
+that would be larger than the code it replaces and adds a supply-chain surface
+to a finance app. `lib/csv.ts` handles quoted fields, embedded delimiters and
+newlines, escaped quotes, CRLF and a UTF-8 BOM, and is covered by 31 tests.
+
+### D24. `skip_rows` counts rows in the file, not rows after blanks are removed
+
+Found by a test. Blank lines were originally discarded before `skip_rows` was
+applied, so "skip 2" ate a different two rows than the two the user could see
+in their editor. Skipping now happens first, and blank-line removal second.
+
+### D25. Date-format detection ignores the ISO fallback
+
+Also found by a test. `parseDateWithFormat` accepts an unambiguous ISO date
+whatever format is declared, which is right for importing but wrong for
+*detecting*: every candidate format "reads" an ISO column, so whichever was
+tried first won. Detection now runs in a strict mode that skips the fallback.
+
+### D26. Money out of the account is a debit
+
+For a single signed amount column, a negative value is money leaving the
+account and is recorded as a `debit` with a positive magnitude. Some card
+exports invert this; the mapping UI shows a live preview of the first ten rows
+with signs applied, so an inverted file is visible before anything is written.
+
+### D27. Rules never overwrite a category set by hand
+
+"Re-run rules" only touches transactions whose `category_id` is null. A rule
+edit silently reclassifying work the user did manually would be worse than the
+rule not applying at all.
+
+### D28. Budgets roll subcategory spend up to the parent
+
+A budget on "Transport" covers spending recorded against "Fuel". Without this
+the one-level nesting in §3.4 would make budgets unusable for anyone who
+actually uses subcategories.
+
+### D29. Import requires an account
+
+Duplicate detection is scoped per account, both because the dedupe hash
+includes `account_id` and because it is what makes the "existing hashes" query
+bounded. An import with no account selected could not be de-duplicated
+reliably, so the wizard requires one.
