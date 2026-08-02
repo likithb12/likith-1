@@ -212,3 +212,47 @@ client died mid-write.
 Trade-off: a stale or offline client can leave the materialised table behind
 the source data. It cannot corrupt anyone else's data (RLS), and the recompute
 is cheap and repeatable.
+
+---
+
+## Phase 1
+
+### D20. The composition chart shows at most three asset types plus "Other"
+
+A stacked area normally only needs *adjacent* series to be colourblind-
+separable. That guarantee does not hold here: which account types a user owns
+is unpredictable, so any two types can end up touching once the types between
+them are absent. The chart therefore has to clear the all-pairs standard.
+
+The largest subset of the categorical palette that passes all-pairs on this
+app's dark surface is **four**, verified rather than estimated:
+
+```
+validate_palette.js "#3987e5,#c98500,#d55181,#008300" \
+  --mode dark --surface "#131c31" --pairs all   → ALL CHECKS PASS
+```
+
+Eight slots fail badly under this standard (magenta↔aqua reaches ΔE 1.6 for
+deuteranopia — indistinguishable). So assets are stacked as at most three
+types, with the remainder folded into "Other assets", and liabilities are a
+single series — which is what §4.1 asks for anyway ("assets by type vs
+liabilities"). Liabilities use a neutral below the zero line rather than a
+categorical hue, because they are the opposing quantity rather than another
+category.
+
+The chosen four sit in the 6–8 CVD band, legal only with secondary encoding, so
+the chart ships a legend, 2px surface gaps between segments, and a data table.
+
+### D21. Colour follows the account type, never its value
+
+Asset types claim colour slots in a fixed order, so changing the chart's date
+range never repaints the series. A type keeps its colour whether or not other
+types are on screen.
+
+### D22. Import replaces or merges, and says which
+
+Ids are regenerated on import so a restore cannot collide with existing rows,
+and every foreign key is remapped to match. That makes a *merge* import create
+duplicate accounts, which is rarely what anyone wants, so the import screen
+offers "replace all my existing data first" and states plainly what each choice
+does rather than guessing.

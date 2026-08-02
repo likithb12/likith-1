@@ -42,7 +42,7 @@ reset flow.
 | Phase | Scope | State |
 |---|---|---|
 | 0 | Scaffold, schema, RLS, auth, routing, CI | ✅ Done |
-| 1 | Accounts, balance snapshots, net worth, dashboard, JSON export | Not started |
+| 1 | Accounts, balance snapshots, net worth, dashboard, JSON export | ✅ Done |
 | 2 | Categories, transactions, CSV import, budgets | Not started |
 | 3 | Obligations | Not started |
 | 4 | Income | Not started |
