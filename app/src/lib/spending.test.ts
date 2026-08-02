@@ -1,14 +1,18 @@
 import { describe, expect, it } from 'vitest'
 import {
   budgetProgress,
+  combinedIncome,
   monthSummary,
+  monthlySavings,
   monthlyTotals,
+  periodSummary,
   rollUpToParents,
   savingsRate,
   spendByCategory,
+  trailingTwelveMonths,
 } from './spending'
 import { Decimal } from './money'
-import type { Budget, Category, Transaction } from '../types'
+import type { Budget, Category, IncomeEvent, Transaction } from '../types'
 
 const USER = 'user-1'
 
@@ -220,5 +224,86 @@ describe('savingsRate', () => {
 
   it('is null when there was no income', () => {
     expect(savingsRate(new Decimal(0), new Decimal('100'))).toBeNull()
+  })
+})
+
+describe('combinedIncome', () => {
+  const transactions = [
+    txn({ id: '1', txn_date: '2026-06-15', amount: '5000.00', direction: 'credit' }),
+    txn({ id: '2', txn_date: '2026-06-20', amount: '200.00', direction: 'credit', is_transfer: true }),
+  ]
+
+  function event(overrides: Partial<IncomeEvent> & { id: string; received_on: string; net_amount: string }): IncomeEvent {
+    return {
+      user_id: USER,
+      income_source_id: null,
+      gross_amount: null,
+      currency: 'AUD',
+      account_id: null,
+      transaction_id: null,
+      created_at: '2026-01-01T00:00:00Z',
+      ...overrides,
+    }
+  }
+
+  it('counts credit transactions', () => {
+    const result = combinedIncome(transactions, [], '2026-06-01', '2026-06-30')
+    expect(result.total.toFixed(2)).toBe('5000.00')
+    expect(result.fromTransactions.toFixed(2)).toBe('5000.00')
+  })
+
+  it('adds income events that are not matched to a transaction', () => {
+    const events = [event({ id: 'e1', received_on: '2026-06-10', net_amount: '750.00' })]
+    const result = combinedIncome(transactions, events, '2026-06-01', '2026-06-30')
+    expect(result.fromEvents.toFixed(2)).toBe('750.00')
+    expect(result.total.toFixed(2)).toBe('5750.00')
+  })
+
+  it('does NOT double count an event matched to a transaction', () => {
+    // The event and the transaction describe the same money.
+    const events = [event({ id: 'e1', received_on: '2026-06-15', net_amount: '5000.00', transaction_id: '1' })]
+    const result = combinedIncome(transactions, events, '2026-06-01', '2026-06-30')
+    expect(result.fromEvents.toFixed(2)).toBe('0.00')
+    expect(result.total.toFixed(2)).toBe('5000.00')
+  })
+
+  it('ignores transfers and events outside the window', () => {
+    const events = [event({ id: 'e1', received_on: '2026-05-31', net_amount: '999.00' })]
+    expect(combinedIncome(transactions, events, '2026-06-01', '2026-06-30').total.toFixed(2)).toBe('5000.00')
+  })
+})
+
+describe('periodSummary and trailing twelve months', () => {
+  const transactions = [
+    txn({ id: 'i1', txn_date: '2026-06-15', amount: '5000.00', direction: 'credit' }),
+    txn({ id: 'e1', txn_date: '2026-06-16', amount: '4000.00' }),
+    txn({ id: 'old', txn_date: '2025-01-01', amount: '10000.00' }),
+  ]
+
+  it('computes a savings rate for a period', () => {
+    const summary = periodSummary(transactions, [], '2026-06-01', '2026-06-30')
+    expect(summary.income.toFixed(2)).toBe('5000.00')
+    expect(summary.spend.toFixed(2)).toBe('4000.00')
+    expect(summary.net.toFixed(2)).toBe('1000.00')
+    expect(summary.rate?.toFixed(1)).toBe('20.0')
+  })
+
+  it('covers exactly twelve months back to the start of that month', () => {
+    const summary = trailingTwelveMonths(transactions, [], '2026-08-02')
+    // Sep 2025 through Aug 2026 — the Jan 2025 row is outside the window.
+    expect(summary.from).toBe('2025-09-01')
+    expect(summary.spend.toFixed(2)).toBe('4000.00')
+  })
+
+  it('reports a null rate when there was no income', () => {
+    const summary = periodSummary([txn({ id: 'e1', txn_date: '2026-06-16', amount: '10.00' })], [], '2026-06-01', '2026-06-30')
+    expect(summary.rate).toBeNull()
+  })
+
+  it('gives one summary per requested month', () => {
+    const summaries = monthlySavings(transactions, [], ['2026-05-01', '2026-06-01'])
+    expect(summaries).toHaveLength(2)
+    expect(summaries[0]?.income.toFixed(2)).toBe('0.00')
+    expect(summaries[1]?.rate?.toFixed(1)).toBe('20.0')
   })
 })

@@ -45,7 +45,7 @@ reset flow.
 | 1 | Accounts, balance snapshots, net worth, dashboard, JSON export | ✅ Done |
 | 2 | Categories, transactions, CSV import, budgets | ✅ Done |
 | 3 | Obligations | ✅ Done |
-| 4 | Income | Not started |
+| 4 | Income | ✅ Done |
 | 5 | Holdings, prices, FX | Not started |
 | 6 | PWA, offline, polish | Not started |
 

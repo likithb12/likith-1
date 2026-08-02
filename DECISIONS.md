@@ -335,3 +335,29 @@ double-counting guard applies to the **net worth** calculation, which is the
 only place counting it twice would produce a wrong number. The screen states
 which obligations are excluded from net worth and why, rather than quietly
 showing two different totals with no explanation.
+
+---
+
+## Phase 4
+
+### D33. Income is counted from transactions plus *unmatched* income events
+
+Income can arrive twice: as an imported credit transaction, and as a manually
+recorded income event. An event matched to a transaction describes the same
+money, so counting both would inflate income and flatter the savings rate —
+the one number this screen exists to report honestly.
+
+`combinedIncome` therefore sums credit transactions plus only those income
+events with no `transaction_id`. The events list labels each row Matched or
+Unmatched so the rule is visible rather than implicit, and the record-income
+form offers nearby credit transactions to match against.
+
+### D34. A savings rate on zero income is null, not zero
+
+Reporting "0%" for a month with no income implies the money was all spent. The
+rate is null and the UI shows "—" with an explanation.
+
+### D35. Recording income rolls the source's next expected date forward
+
+Otherwise `next_expected_date` goes stale the first time you are paid and the
+"next expected" column becomes actively misleading.

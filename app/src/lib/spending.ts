@@ -1,6 +1,6 @@
 import { Decimal, d } from './money'
-import { monthKey, monthStart, type ISODate } from './dates'
-import type { Budget, Category, Transaction } from '../types'
+import { addMonths, monthKey, monthStart, type ISODate } from './dates'
+import type { Budget, Category, IncomeEvent, Transaction } from '../types'
 
 /**
  * Spending and income aggregation.
@@ -202,4 +202,84 @@ export function monthSummary(
 export function savingsRate(income: Decimal, spend: Decimal): Decimal | null {
   if (income.lte(0)) return null
   return income.minus(spend).div(income).times(100)
+}
+
+/**
+ * Total income for a period, from both sources, without double counting.
+ *
+ * Income arrives two ways: as a credit transaction (usually imported), and as
+ * a manually recorded income event. An event that is matched to a transaction
+ * describes the *same* money, so counting both would inflate income and
+ * flatter the savings rate. Matched events are therefore skipped, and only
+ * unmatched ones are added.
+ */
+export function combinedIncome(
+  transactions: Transaction[],
+  incomeEvents: IncomeEvent[],
+  from: ISODate,
+  to: ISODate,
+): { total: Decimal; fromTransactions: Decimal; fromEvents: Decimal } {
+  let fromTransactions = new Decimal(0)
+  for (const transaction of transactions) {
+    if (!inScope(transaction, { from, to })) continue
+    if (transaction.direction !== 'credit') continue
+    fromTransactions = fromTransactions.plus(d(transaction.amount))
+  }
+
+  let fromEvents = new Decimal(0)
+  for (const event of incomeEvents) {
+    if (event.transaction_id) continue
+    if (event.received_on < from || event.received_on > to) continue
+    fromEvents = fromEvents.plus(d(event.net_amount))
+  }
+
+  return { total: fromTransactions.plus(fromEvents), fromTransactions, fromEvents }
+}
+
+export interface PeriodSummary {
+  from: ISODate
+  to: ISODate
+  income: Decimal
+  spend: Decimal
+  net: Decimal
+  rate: Decimal | null
+}
+
+export function periodSummary(
+  transactions: Transaction[],
+  incomeEvents: IncomeEvent[],
+  from: ISODate,
+  to: ISODate,
+): PeriodSummary {
+  let spend = new Decimal(0)
+  for (const transaction of transactions) {
+    if (!inScope(transaction, { from, to })) continue
+    if (transaction.direction === 'debit') spend = spend.plus(d(transaction.amount))
+  }
+
+  const income = combinedIncome(transactions, incomeEvents, from, to).total
+
+  return { from, to, income, spend, net: income.minus(spend), rate: savingsRate(income, spend) }
+}
+
+/** Per-month income, spend and savings rate, ascending. */
+export function monthlySavings(
+  transactions: Transaction[],
+  incomeEvents: IncomeEvent[],
+  months: ISODate[],
+): PeriodSummary[] {
+  return months.map((month) => {
+    const start = monthStart(month)
+    return periodSummary(transactions, incomeEvents, start, lastDayOf(start))
+  })
+}
+
+/** Trailing twelve months ending on `asAt`, inclusive. */
+export function trailingTwelveMonths(
+  transactions: Transaction[],
+  incomeEvents: IncomeEvent[],
+  asAt: ISODate,
+): PeriodSummary {
+  const start = monthStart(addMonths(asAt, -11))
+  return periodSummary(transactions, incomeEvents, start, asAt)
 }
