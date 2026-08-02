@@ -16,8 +16,18 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 MIGRATIONS_DIR="$REPO_ROOT/supabase/migrations"
 TESTS_DIR="$REPO_ROOT/supabase/tests"
 
-PGBIN="${PGBIN:-/usr/lib/postgresql/16/bin}"
-if [ -d "$PGBIN" ]; then
+# Find the server binaries. Debian and Ubuntu keep them off PATH under a
+# version directory, and pinning a version would break the moment the CI image
+# ships a newer PostgreSQL — so take the highest available.
+if [ -z "${PGBIN:-}" ]; then
+  for candidate in $(ls -d /usr/lib/postgresql/*/bin 2>/dev/null | sort -V -r); do
+    if [ -x "$candidate/initdb" ]; then
+      PGBIN="$candidate"
+      break
+    fi
+  done
+fi
+if [ -n "${PGBIN:-}" ] && [ -d "$PGBIN" ]; then
   export PATH="$PGBIN:$PATH"
 fi
 

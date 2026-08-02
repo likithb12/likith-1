@@ -64,10 +64,10 @@ jobs:
       - uses: actions/checkout@v4
 
       # ubuntu-latest ships PostgreSQL client and server packages already.
+      # The script finds the PostgreSQL server binaries itself, so a runner
+      # image bumping its PostgreSQL version does not break the build.
       - name: Apply migrations and run RLS tests
         run: ./supabase/tests/run_tests.sh
-        env:
-          PGBIN: /usr/lib/postgresql/16/bin
 
   build:
     name: Build
@@ -131,4 +131,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
