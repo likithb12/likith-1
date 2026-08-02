@@ -1,0 +1,52 @@
+{
+  "name": "Net Worth",
+  "short_name": "Net Worth",
+  "description": "Private personal net worth, spending, obligations and income tracking.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0b1120",
+  "theme_color": "#0b1120",
+  "lang": "en-AU",
+  "categories": ["finance", "productivity"],
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-maskable-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Update balances",
+      "short_name": "Balances",
+      "description": "Record a new balance for every account",
+      "url": "./#/balances"
+    },
+    {
+      "name": "Expenses",
+      "short_name": "Expenses",
+      "url": "./#/expenses"
+    }
+  ]
+}

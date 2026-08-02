@@ -1,0 +1,138 @@
+# Builds the existing Jekyll site AND the net worth app, then deploys both as
+# one GitHub Pages artifact.
+#
+# Two workflows cannot both deploy to Pages without fighting over the
+# concurrency group and overwriting each other, so this replaces the previous
+# jekyll-gh-pages.yml. Layout of the published site:
+#
+#   /likith-1/            Jekyll site (index.md, prototype/, tracker/)
+#   /likith-1/networth/   the app
+#
+# The Supabase URL and anon key are repository VARIABLES, not secrets. They are
+# public by design and ship in the bundle; RLS is the security boundary.
+
+name: Deploy site and app to GitHub Pages
+
+on:
+  push:
+    branches: ['master']
+  pull_request:
+    branches: ['master']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: 'pages'
+  cancel-in-progress: false
+
+jobs:
+  # Checks run on pull requests too, where deploying would be wrong.
+  verify:
+    name: Typecheck, lint and test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit tests
+        run: npm test
+
+  database:
+    name: Migrations and RLS tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # ubuntu-latest ships PostgreSQL client and server packages already.
+      # The script finds the PostgreSQL server binaries itself, so a runner
+      # image bumping its PostgreSQL version does not break the build.
+      - name: Apply migrations and run RLS tests
+        run: ./supabase/tests/run_tests.sh
+
+  build:
+    name: Build
+    needs: [verify, database]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - name: Build the app
+        working-directory: app
+        env:
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
+          VITE_BASE_PATH: /likith-1/networth/
+        run: |
+          npm ci
+          npm run build
+
+      - name: Warn when the backend is unconfigured
+        if: vars.VITE_SUPABASE_URL == '' || vars.VITE_SUPABASE_ANON_KEY == ''
+        run: |
+          echo "::warning title=Supabase not configured::VITE_SUPABASE_URL and/or \
+          VITE_SUPABASE_ANON_KEY are not set as repository variables. The app will \
+          deploy and render a 'Backend not configured' screen instead of signing in. \
+          Set them under Settings → Secrets and variables → Actions → Variables."
+
+      - uses: actions/configure-pages@v5
+
+      - name: Build the Jekyll site
+        uses: actions/jekyll-build-pages@v1
+        with:
+          source: ./
+          destination: ./_site
+
+      - name: Mount the app under /networth
+        run: |
+          # jekyll-build-pages runs in a Docker container as root, so _site
+          # comes back owned by root and this step — which runs as the runner
+          # user — cannot write into it.
+          sudo chown -R "$(id -u):$(id -g)" _site
+          mkdir -p _site/networth
+          cp -r app/dist/. _site/networth/
+          # Without .nojekyll, Pages drops paths beginning with an underscore.
+          touch _site/.nojekyll
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./_site
+
+  deploy:
+    name: Deploy
+    # Pull requests build and test but must not publish.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    needs: build
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
